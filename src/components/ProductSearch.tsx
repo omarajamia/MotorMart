@@ -1,6 +1,7 @@
 
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import type { Product } from "@/lib/types";
 
@@ -146,11 +147,15 @@ export default function ProductSearch({ products }: { products: Product[] }) {
               className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
             >
               {product.image_url ? (
-                <img
-                  src={product.image_url}
-                  alt={product.name}
-                  className="h-48 w-full object-cover"
-                />
+                <div className="relative h-48 w-full">
+                  <Image
+                    src={product.image_url}
+                    alt={product.name}
+                    fill
+                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    className="object-cover"
+                  />
+                </div>
               ) : (
                 <div className="flex h-48 items-center justify-center bg-gray-100 text-gray-400">
                   No image available
