@@ -2,18 +2,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-
-type Product = {
-  id: string;
-  name: string;
-  part_number: string;
-  brand: string;
-  car_model: string;
-  category: string | null;
-  price: number;
-  stock_quantity: number;
-  image_url: string | null;
-};
+import type { Product } from "@/lib/types";
 
 export default function ProductSearch({ products }: { products: Product[] }) {
   const [search, setSearch] = useState("");
