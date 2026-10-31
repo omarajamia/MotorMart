@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MotorMart
 
-## Getting Started
+MotorMart is a web store for car spare parts. It currently supports **Kia**, **Hyundai** and **Nissan**.
 
-First, run the development server:
+Customers can browse active products and filter them by search text, brand, car model, category and stock. Prices are shown in JOD.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Tech stack
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- [Next.js](https://nextjs.org) (App Router) with TypeScript
+- React
+- Tailwind CSS
+- [Supabase](https://supabase.com) (hosted Postgres database and API)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Getting started
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Install dependencies:
 
-## Learn More
+   ```bash
+   npm install
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. Create a `.env.local` file in the project root with your Supabase project's settings
+   (Supabase dashboard → Project Settings → API):
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   Use the **publishable** (anon) key only. Never put the secret / service-role key in this file
+   or in client code. `.env.local` is ignored by Git and must never be committed.
 
-## Deploy on Vercel
+3. Start the development server:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   ```bash
+   npm run dev
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   Then open [http://localhost:3000](http://localhost:3000).
+
+## Scripts
+
+| Command         | What it does                       |
+| --------------- | ---------------------------------- |
+| `npm run dev`   | Start the development server       |
+| `npm run build` | Build the app for production       |
+| `npm run start` | Run the production build           |
+| `npm run lint`  | Check the code with ESLint         |
+
+## Project structure
+
+- `src/app/page.tsx` – storefront page (loads active products from Supabase)
+- `src/components/ProductSearch.tsx` – search, filters and product grid
+- `src/lib/supabase.ts` – Supabase client
+- `src/lib/types.ts` – shared TypeScript types
+
+## Database
+
+Products are stored in the Supabase `public.products` table. Row Level Security is enabled, and
+only products with `is_active = true` are publicly visible.
+
+Product images are expected to be stored in Supabase Storage (public bucket URLs).
+
+## Troubleshooting
+
+- **"We couldn't load products right now"** – check the server log for the full error.
+  Free Supabase projects are **paused after a period of inactivity**; open the Supabase
+  dashboard and restore the project, then reload after a minute or two.
+- **"NEXT_PUBLIC_SUPABASE_URL is missing"** – `.env.local` is missing or a value is empty.

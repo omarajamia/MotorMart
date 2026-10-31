@@ -13,6 +13,10 @@ export default async function Home() {
     .eq("is_active", true)
     .order("name");
 
+  if (error) {
+    console.error("Failed to load products:", error);
+  }
+
   const products = (data ?? []) as Product[];
 
   return (
@@ -43,9 +47,8 @@ export default async function Home() {
 
         {error ? (
           <div className="mt-8 rounded-lg border border-red-200 bg-red-50 p-5 text-red-700">
-            Could not load products. Check your Supabase connection and table
-            permissions.
-            <p className="mt-2 text-sm">{error.message}</p>
+            We couldn&apos;t load products right now. Please try again
+            shortly.
           </div>
         ) : products.length === 0 ? (
           <div className="mt-10 rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
