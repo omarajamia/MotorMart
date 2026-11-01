@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ErrorMessages } from "@/lib/i18n";
 
 const BUCKET = "product-images";
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -16,12 +17,12 @@ export function getImageFile(formData: FormData) {
   return file instanceof File && file.size > 0 ? file : null;
 }
 
-export function validateImage(file: File) {
+export function validateImage(file: File, errors: ErrorMessages) {
   if (!EXTENSIONS[file.type]) {
-    return "Image must be a JPEG, PNG or WebP file.";
+    return errors.imageType;
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    return "Image must be 5 MB or smaller.";
+    return errors.imageSize;
   }
   return null;
 }

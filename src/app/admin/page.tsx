@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import LogoutButton from "@/components/admin/LogoutButton";
 import NoAccess from "@/components/admin/NoAccess";
 import ProductRow from "@/components/admin/ProductRow";
-import { requireAccount } from "@/lib/admin";
+import { requireAdminAccount } from "@/lib/admin";
 import type { AdminProduct } from "@/lib/types";
 
 export const instant = false;
@@ -17,7 +17,7 @@ export default function AdminPage() {
 }
 
 async function AdminDashboard() {
-  const { supabase, user, hasAccess, shop } = await requireAccount();
+  const { supabase, user, hasAccess, shop } = await requireAdminAccount();
 
   if (!hasAccess) {
     return <NoAccess email={user.email} />;

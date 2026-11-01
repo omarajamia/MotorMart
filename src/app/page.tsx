@@ -1,4 +1,4 @@
-
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import ProductSearch from "@/components/ProductSearch";
 import type { Product } from "@/lib/types";
@@ -66,6 +66,11 @@ export default async function Home() {
 
       <footer className="border-t bg-white px-6 py-6 text-center text-sm text-gray-500">
         MotorMart · Spare parts made easier
+        <p className="mt-2">
+          <Link href="/shop/login" className="text-orange-700 hover:underline">
+            Shop owners: sign in · دخول أصحاب المحلات
+          </Link>
+        </p>
       </footer>
     </main>
   );

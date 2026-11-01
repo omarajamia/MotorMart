@@ -2,9 +2,9 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { supabaseConfig } from "@/lib/supabase";
 
-// Keeps the admin session fresh and sends signed-out visitors to the login
-// page. This is only a convenience: every admin page and action checks the
-// user again, and the database policies are what actually protect the data.
+// Keeps the session fresh and sends signed-out visitors to the login page of
+// the admin or shop area. This is only a convenience: every page and action
+// checks the user again, and the database policies protect the data.
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -32,13 +32,17 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isLoginPage = request.nextUrl.pathname === "/admin/login";
+  // /admin is for the MotorMart team, /shop for shop owners. Each area has
+  // its own login page; the pages send accounts to the right area.
+  const area = request.nextUrl.pathname.startsWith("/shop") ? "/shop" : "/admin";
+  const loginPage = `${area}/login`;
+  const isLoginPage = request.nextUrl.pathname === loginPage;
 
   if (!user && !isLoginPage) {
-    return redirectWithCookies(request, response, "/admin/login");
+    return redirectWithCookies(request, response, loginPage);
   }
   if (user && isLoginPage) {
-    return redirectWithCookies(request, response, "/admin");
+    return redirectWithCookies(request, response, area);
   }
 
   return response;
@@ -55,5 +59,5 @@ function redirectWithCookies(
 }
 
 export const config = {
-  matcher: ["/admin", "/admin/:path*"],
+  matcher: ["/admin", "/admin/:path*", "/shop", "/shop/:path*"],
 };

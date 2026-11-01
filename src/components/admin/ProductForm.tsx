@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useActionState } from "react";
 import { createProduct, updateProduct } from "@/app/admin/actions";
+import { messages, type Lang } from "@/lib/i18n";
 import { BRANDS } from "@/lib/products";
 import type { ActionState, ProductDetails } from "@/lib/types";
 
@@ -16,12 +17,17 @@ export default function ProductForm({
   product,
   categories,
   shops,
+  basePath = "/admin",
+  lang = "en",
 }: {
   product?: ProductDetails;
   categories: string[];
   // Only passed for MotorMart admins; shop accounts always use their shop.
   shops?: { id: string; name: string }[];
+  basePath?: "/admin" | "/shop";
+  lang?: Lang;
 }) {
+  const t = messages[lang];
   const [state, formAction, pending] = useActionState(
     product ? updateProduct : createProduct,
     initialState
@@ -37,7 +43,7 @@ export default function ProductForm({
       <div className="grid gap-5 sm:grid-cols-2">
         {shops && (
           <label className="block sm:col-span-2">
-            <span className="text-sm font-medium text-gray-700">Shop *</span>
+            <span className="text-sm font-medium text-gray-700">{t.shop}</span>
             <select
               name="shop_id"
               required
@@ -45,7 +51,7 @@ export default function ProductForm({
               className={inputClass}
             >
               <option value="" disabled>
-                Choose a shop
+                {t.chooseShop}
               </option>
               {shops.map((shop) => (
                 <option key={shop.id} value={shop.id}>
@@ -57,20 +63,20 @@ export default function ProductForm({
         )}
 
         <label className="block sm:col-span-2">
-          <span className="text-sm font-medium text-gray-700">Name *</span>
+          <span className="text-sm font-medium text-gray-700">{t.name}</span>
           <input
             name="name"
             required
             maxLength={200}
             defaultValue={product?.name}
-            placeholder="e.g. Front brake pads"
+            placeholder={t.namePlaceholder}
             className={inputClass}
           />
         </label>
 
         <label className="block">
           <span className="text-sm font-medium text-gray-700">
-            Part number *
+            {t.partNumber}
           </span>
           <input
             name="part_number"
@@ -83,13 +89,13 @@ export default function ProductForm({
         </label>
 
         <label className="block">
-          <span className="text-sm font-medium text-gray-700">Category</span>
+          <span className="text-sm font-medium text-gray-700">{t.category}</span>
           <input
             name="category"
             list="category-options"
             maxLength={100}
             defaultValue={product?.category ?? ""}
-            placeholder="e.g. Brakes"
+            placeholder={t.categoryPlaceholder}
             className={inputClass}
           />
           <datalist id="category-options">
@@ -100,7 +106,7 @@ export default function ProductForm({
         </label>
 
         <label className="block">
-          <span className="text-sm font-medium text-gray-700">Brand *</span>
+          <span className="text-sm font-medium text-gray-700">{t.brand}</span>
           <select
             name="brand"
             required
@@ -108,7 +114,7 @@ export default function ProductForm({
             className={inputClass}
           >
             <option value="" disabled>
-              Choose a brand
+              {t.chooseBrand}
             </option>
             {BRANDS.map((brand) => (
               <option key={brand} value={brand}>
@@ -120,20 +126,20 @@ export default function ProductForm({
 
         <label className="block">
           <span className="text-sm font-medium text-gray-700">
-            Car model *
+            {t.carModel}
           </span>
           <input
             name="car_model"
             required
             maxLength={100}
             defaultValue={product?.car_model}
-            placeholder="e.g. Cerato"
+            placeholder={t.carModelPlaceholder}
             className={inputClass}
           />
         </label>
 
         <label className="block">
-          <span className="text-sm font-medium text-gray-700">Year from</span>
+          <span className="text-sm font-medium text-gray-700">{t.yearFrom}</span>
           <input
             type="number"
             name="year_from"
@@ -146,7 +152,7 @@ export default function ProductForm({
         </label>
 
         <label className="block">
-          <span className="text-sm font-medium text-gray-700">Year to</span>
+          <span className="text-sm font-medium text-gray-700">{t.yearTo}</span>
           <input
             type="number"
             name="year_to"
@@ -160,7 +166,7 @@ export default function ProductForm({
 
         <label className="block">
           <span className="text-sm font-medium text-gray-700">
-            Price (JOD) *
+            {t.price}
           </span>
           <input
             type="number"
@@ -177,7 +183,7 @@ export default function ProductForm({
 
         <label className="block">
           <span className="text-sm font-medium text-gray-700">
-            Stock quantity *
+            {t.stock}
           </span>
           <input
             type="number"
@@ -191,7 +197,7 @@ export default function ProductForm({
         </label>
 
         <div className="sm:col-span-2">
-          <span className="text-sm font-medium text-gray-700">Photo</span>
+          <span className="text-sm font-medium text-gray-700">{t.photo}</span>
           {product?.image_url && (
             <div className="mt-2 flex items-center gap-4">
               <div className="relative h-24 w-32 overflow-hidden rounded-lg border border-gray-200">
@@ -209,7 +215,7 @@ export default function ProductForm({
                   name="remove_image"
                   className="h-4 w-4 accent-orange-500"
                 />
-                Remove current photo
+                {t.removePhoto}
               </label>
             </div>
           )}
@@ -220,21 +226,21 @@ export default function ProductForm({
             className="mt-2 block w-full text-sm text-gray-700 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-medium hover:file:bg-slate-200"
           />
           <p className="mt-1 text-xs text-gray-500">
-            JPEG, PNG or WebP, up to 5 MB.
-            {product?.image_url && " Choosing a new photo replaces the current one."}
+            {t.photoHint}
+            {product?.image_url && t.photoReplaceHint}
           </p>
         </div>
 
         <label className="block sm:col-span-2">
           <span className="text-sm font-medium text-gray-700">
-            Description
+            {t.description}
           </span>
           <textarea
             name="description"
             rows={4}
             maxLength={2000}
             defaultValue={product?.description ?? ""}
-            placeholder="What the part is, what it fits, any notes for customers"
+            placeholder={t.descriptionPlaceholder}
             className={inputClass}
           />
         </label>
@@ -246,7 +252,7 @@ export default function ProductForm({
             defaultChecked={product?.is_active ?? true}
             className="h-4 w-4 accent-orange-500"
           />
-          Show this product in the shop
+          {t.showInShop}
         </label>
       </div>
 
@@ -262,10 +268,10 @@ export default function ProductForm({
           disabled={pending}
           className="rounded-lg bg-orange-500 px-5 py-2 font-medium text-white hover:bg-orange-600 disabled:opacity-60"
         >
-          {pending ? "Saving…" : product ? "Save changes" : "Add product"}
+          {pending ? t.saving : product ? t.saveChanges : t.addProductTitle}
         </button>
-        <Link href="/admin" className="text-sm text-gray-600 hover:underline">
-          Cancel
+        <Link href={basePath} className="text-sm text-gray-600 hover:underline">
+          {t.cancel}
         </Link>
       </div>
     </form>

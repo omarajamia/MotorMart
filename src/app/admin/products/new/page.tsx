@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import NoAccess from "@/components/admin/NoAccess";
 import ProductForm from "@/components/admin/ProductForm";
-import { getCategories, getShops, requireAccount } from "@/lib/admin";
+import { getCategories, getShops, requireAdminAccount } from "@/lib/admin";
 
 export const instant = false;
 
@@ -19,7 +19,7 @@ export default function NewProductPage() {
 }
 
 async function NewProduct() {
-  const { supabase, user, hasAccess, shop } = await requireAccount();
+  const { supabase, user, hasAccess, shop } = await requireAdminAccount();
   if (!hasAccess) {
     return <NoAccess email={user.email} />;
   }

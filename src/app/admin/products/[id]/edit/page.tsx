@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import DeleteProductButton from "@/components/admin/DeleteProductButton";
 import NoAccess from "@/components/admin/NoAccess";
 import ProductForm from "@/components/admin/ProductForm";
-import { getCategories, getShops, requireAccount } from "@/lib/admin";
+import { getCategories, getShops, requireAdminAccount } from "@/lib/admin";
 import { UUID_PATTERN } from "@/lib/products";
 import type { ProductDetails } from "@/lib/types";
 
@@ -29,7 +29,7 @@ async function EditProduct({
   params: PageProps<"/admin/products/[id]/edit">["params"];
 }) {
   const { id } = await params;
-  const { supabase, user, hasAccess, shop } = await requireAccount();
+  const { supabase, user, hasAccess, shop } = await requireAdminAccount();
   if (!hasAccess) {
     return <NoAccess email={user.email} />;
   }

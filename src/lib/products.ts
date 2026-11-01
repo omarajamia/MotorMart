@@ -1,3 +1,5 @@
+import type { ErrorMessages } from "@/lib/i18n";
+
 export const BRANDS = ["Kia", "Hyundai", "Nissan"] as const;
 
 export const UUID_PATTERN =
@@ -33,9 +35,10 @@ function optionalYear(value: string) {
 }
 
 // Validates the add/edit product form on the server. Returns either the
-// cleaned values or a message to show the admin.
+// cleaned values or a message (in the account's language) to show.
 export function parseProductForm(
-  formData: FormData
+  formData: FormData,
+  errors: ErrorMessages
 ): { data: ProductInput } | { error: string } {
   const name = text(formData, "name");
   const partNumber = text(formData, "part_number");
@@ -49,34 +52,34 @@ export function parseProductForm(
   const yearTo = optionalYear(text(formData, "year_to"));
 
   if (!name || name.length > 200) {
-    return { error: "Enter a product name (up to 200 characters)." };
+    return { error: errors.name };
   }
   if (!partNumber || partNumber.length > 100) {
-    return { error: "Enter a part number (up to 100 characters)." };
+    return { error: errors.partNumber };
   }
   if (!BRANDS.includes(brand as ProductInput["brand"])) {
-    return { error: "Choose a brand." };
+    return { error: errors.brand };
   }
   if (!carModel || carModel.length > 100) {
-    return { error: "Enter the car model (up to 100 characters)." };
+    return { error: errors.carModel };
   }
   if (yearFrom === undefined || yearTo === undefined) {
-    return { error: `Years must be between ${MIN_YEAR} and ${MAX_YEAR}.` };
+    return { error: errors.years(MIN_YEAR, MAX_YEAR) };
   }
   if (yearFrom !== null && yearTo !== null && yearFrom > yearTo) {
-    return { error: "“Year from” can't be after “Year to”." };
+    return { error: errors.yearOrder };
   }
   if (category.length > 100) {
-    return { error: "Category can be up to 100 characters." };
+    return { error: errors.category };
   }
   if (description.length > 2000) {
-    return { error: "Description can be up to 2000 characters." };
+    return { error: errors.description };
   }
   if (!Number.isFinite(price) || price < 0 || price > 1_000_000) {
-    return { error: "Price must be a number of 0 or more." };
+    return { error: errors.price };
   }
   if (!Number.isInteger(stock) || stock < 0 || stock > 1_000_000) {
-    return { error: "Stock must be a whole number of 0 or more." };
+    return { error: errors.stock };
   }
 
   return {
