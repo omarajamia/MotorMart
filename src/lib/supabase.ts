@@ -12,4 +12,6 @@ if (!supabaseKey) {
   );
 }
 
+export const supabaseConfig = { url: supabaseUrl, key: supabaseKey };
+
 export const supabase = createClient(supabaseUrl, supabaseKey);
