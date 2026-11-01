@@ -2,7 +2,7 @@
 
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
-import { getAdmin } from "@/lib/admin";
+import { requireAccount } from "@/lib/admin";
 import {
   getImageFile,
   removeProductImage,
@@ -30,13 +30,15 @@ export async function login(
     return { error: "Wrong email or password." };
   }
 
-  const { data: isAdmin, error: adminError } = await supabase.rpc("is_admin");
-  if (adminError || isAdmin !== true) {
-    if (adminError) {
-      console.error("Admin check failed:", adminError);
-    }
+  // Only MotorMart admins and shop accounts may stay signed in.
+  const [{ data: isAdmin, error: adminError }, { data: shopId, error: shopError }] =
+    await Promise.all([supabase.rpc("is_admin"), supabase.rpc("my_shop_id")]);
+  if (adminError) console.error("Admin check failed:", adminError);
+  if (shopError) console.error("Shop membership check failed:", shopError);
+
+  if (isAdmin !== true && !shopId) {
     await supabase.auth.signOut();
-    return { error: "This account doesn't have admin access." };
+    return { error: "This account doesn't have access." };
   }
 
   redirect("/admin");
@@ -52,9 +54,9 @@ export async function updatePriceAndStock(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const { supabase, isAdmin } = await getAdmin();
-  if (!isAdmin) {
-    return { error: "You don't have admin access." };
+  const { supabase, hasAccess } = await requireAccount();
+  if (!hasAccess) {
+    return { error: "You don't have access." };
   }
 
   const id = String(formData.get("id") ?? "");
@@ -90,9 +92,9 @@ export async function setProductActive(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const { supabase, isAdmin } = await getAdmin();
-  if (!isAdmin) {
-    return { error: "You don't have admin access." };
+  const { supabase, hasAccess } = await requireAccount();
+  if (!hasAccess) {
+    return { error: "You don't have access." };
   }
 
   const id = String(formData.get("id") ?? "");
@@ -119,22 +121,49 @@ export async function setProductActive(
 
 function saveErrorMessage(error: { code?: string } | null) {
   return error?.code === "23505"
-    ? "A product with this part number already exists."
+    ? "This shop already has a product with this part number."
     : "Couldn't save. Please try again.";
+}
+
+type Account = Awaited<ReturnType<typeof requireAccount>>;
+
+// Which shop a product belongs to. Shop accounts always use their own shop;
+// MotorMart admins pick one in the form.
+async function resolveShopId(account: Account, formData: FormData) {
+  if (account.shop) {
+    return account.shop.id;
+  }
+
+  const shopId = String(formData.get("shop_id") ?? "");
+  if (!UUID_PATTERN.test(shopId)) {
+    return null;
+  }
+  const { data } = await account.supabase
+    .from("shops")
+    .select("id")
+    .eq("id", shopId)
+    .maybeSingle();
+  return data ? shopId : null;
 }
 
 export async function createProduct(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const { supabase, isAdmin } = await getAdmin();
-  if (!isAdmin) {
-    return { error: "You don't have admin access." };
+  const account = await requireAccount();
+  const { supabase } = account;
+  if (!account.hasAccess) {
+    return { error: "You don't have access." };
   }
 
   const parsed = parseProductForm(formData);
   if ("error" in parsed) {
     return { error: parsed.error };
+  }
+
+  const shopId = await resolveShopId(account, formData);
+  if (!shopId) {
+    return { error: "Choose a shop." };
   }
 
   const image = getImageFile(formData);
@@ -143,14 +172,16 @@ export async function createProduct(
     return { error: imageError };
   }
 
-  const imageUrl = image ? await uploadProductImage(supabase, image) : null;
+  const imageUrl = image
+    ? await uploadProductImage(supabase, shopId, image)
+    : null;
   if (image && !imageUrl) {
     return { error: "Couldn't upload the image. Please try again." };
   }
 
   const { error } = await supabase
     .from("products")
-    .insert({ ...parsed.data, image_url: imageUrl });
+    .insert({ ...parsed.data, shop_id: shopId, image_url: imageUrl });
   if (error) {
     console.error("Failed to create product:", error);
     await removeProductImage(supabase, imageUrl);
@@ -164,9 +195,10 @@ export async function updateProduct(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const { supabase, isAdmin } = await getAdmin();
-  if (!isAdmin) {
-    return { error: "You don't have admin access." };
+  const account = await requireAccount();
+  const { supabase } = account;
+  if (!account.hasAccess) {
+    return { error: "You don't have access." };
   }
 
   const id = String(formData.get("id") ?? "");
@@ -177,6 +209,11 @@ export async function updateProduct(
   const parsed = parseProductForm(formData);
   if ("error" in parsed) {
     return { error: parsed.error };
+  }
+
+  const shopId = await resolveShopId(account, formData);
+  if (!shopId) {
+    return { error: "Choose a shop." };
   }
 
   const image = getImageFile(formData);
@@ -198,7 +235,7 @@ export async function updateProduct(
   // the current photo is kept.
   let imageUrl = current.image_url;
   if (image) {
-    imageUrl = await uploadProductImage(supabase, image);
+    imageUrl = await uploadProductImage(supabase, shopId, image);
     if (!imageUrl) {
       return { error: "Couldn't upload the image. Please try again." };
     }
@@ -208,7 +245,7 @@ export async function updateProduct(
 
   const { data, error } = await supabase
     .from("products")
-    .update({ ...parsed.data, image_url: imageUrl })
+    .update({ ...parsed.data, shop_id: shopId, image_url: imageUrl })
     .eq("id", id)
     .select("id");
 
@@ -231,9 +268,9 @@ export async function deleteProduct(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const { supabase, isAdmin } = await getAdmin();
-  if (!isAdmin) {
-    return { error: "You don't have admin access." };
+  const { supabase, hasAccess } = await requireAccount();
+  if (!hasAccess) {
+    return { error: "You don't have access." };
   }
 
   const id = String(formData.get("id") ?? "");

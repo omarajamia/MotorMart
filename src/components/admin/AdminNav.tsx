@@ -3,16 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function AdminNav() {
+export default function AdminNav({ isOwner }: { isOwner: boolean }) {
   // Signed-out visitors on the login page only get a link back to the shop.
   const isLoginPage = usePathname() === "/admin/login";
 
   return (
     <nav className="flex items-center gap-5 text-sm text-gray-300">
       {!isLoginPage && (
+        <Link href="/admin" className="hover:text-white">
+          Products
+        </Link>
+      )}
+      {!isLoginPage && isOwner && (
         <>
-          <Link href="/admin" className="hover:text-white">
-            Products
+          <Link href="/admin/shops" className="hover:text-white">
+            Shops
           </Link>
           <Link href="/admin/staff" className="hover:text-white">
             Staff
