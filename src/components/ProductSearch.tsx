@@ -10,18 +10,7 @@ export default function ProductSearch({ products }: { products: Product[] }) {
   const [brand, setBrand] = useState("All");
   const [model, setModel] = useState("All");
   const [category, setCategory] = useState("All");
-  const [shop, setShop] = useState("All");
   const [inStockOnly, setInStockOnly] = useState(false);
-
-  const shops = useMemo(
-    () =>
-      [...new Set(
-        products
-          .map((p) => p.shop?.name)
-          .filter((s): s is string => Boolean(s))
-      )].sort(),
-    [products]
-  );
 
   const models = useMemo(
     () =>
@@ -52,22 +41,20 @@ export default function ProductSearch({ products }: { products: Product[] }) {
       p.part_number.toLowerCase().includes(term) ||
       p.brand.toLowerCase().includes(term) ||
       p.car_model.toLowerCase().includes(term) ||
-      (p.category ?? "").toLowerCase().includes(term) ||
-      (p.shop?.name ?? "").toLowerCase().includes(term);
+      (p.category ?? "").toLowerCase().includes(term);
 
     return (
       matchesSearch &&
       (brand === "All" || p.brand === brand) &&
       (model === "All" || p.car_model === model) &&
       (category === "All" || p.category === category) &&
-      (shop === "All" || p.shop?.name === shop) &&
       (!inStockOnly || p.stock_quantity > 0)
     );
   });
 
   return (
     <div>
-      <div className="mt-8 grid gap-4 rounded-xl border border-gray-200 bg-white p-5 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-8 grid gap-4 rounded-xl border border-gray-200 bg-white p-5 sm:grid-cols-2 lg:grid-cols-4">
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -115,20 +102,7 @@ export default function ProductSearch({ products }: { products: Product[] }) {
           ))}
         </select>
 
-        <select
-          value={shop}
-          onChange={(e) => setShop(e.target.value)}
-          className="rounded-lg border border-gray-300 px-4 py-3"
-        >
-          <option value="All">All shops</option>
-          {shops.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
-
-        <label className="flex items-center gap-2 text-sm text-gray-700 sm:col-span-2 lg:col-span-5">
+        <label className="flex items-center gap-2 text-sm text-gray-700 sm:col-span-2 lg:col-span-4">
           <input
             type="checkbox"
             checked={inStockOnly}
@@ -138,7 +112,7 @@ export default function ProductSearch({ products }: { products: Product[] }) {
           Show in-stock products only
         </label>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2 lg:col-span-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2 lg:col-span-4">
           <p className="text-sm text-gray-600">
             {filteredProducts.length} product(s) found
           </p>
@@ -149,7 +123,6 @@ export default function ProductSearch({ products }: { products: Product[] }) {
               setBrand("All");
               setModel("All");
               setCategory("All");
-              setShop("All");
               setInStockOnly(false);
             }}
             className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium hover:bg-slate-200"
@@ -203,28 +176,6 @@ export default function ProductSearch({ products }: { products: Product[] }) {
                 {product.category && (
                   <p className="mt-1 text-sm text-gray-600">
                     Category: {product.category}
-                  </p>
-                )}
-                {product.shop && (
-                  <p className="mt-3 text-sm">
-                    <span className="font-medium text-slate-800">
-                      {product.shop.name}
-                    </span>
-                    {product.shop.city && (
-                      <span className="text-gray-500"> · {product.shop.city}</span>
-                    )}
-                    {product.shop.phone && (
-                      <>
-                        {" · "}
-                        <a
-                          href={`tel:${product.shop.phone.replace(/[^0-9+]/g, "")}`}
-                          className="text-orange-700 hover:underline"
-                          dir="ltr"
-                        >
-                          {product.shop.phone}
-                        </a>
-                      </>
-                    )}
                   </p>
                 )}
 

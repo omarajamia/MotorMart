@@ -4,9 +4,9 @@ import { createClient } from "@supabase/supabase-js";
 import { supabaseConfig } from "@/lib/supabase";
 
 // A Supabase client with the secret service-role key. It bypasses Row Level
-// Security, so only use it on the server, only after requireAccount() has
-// confirmed the caller is the owner, and only for things the normal client
-// can't do (creating login accounts).
+// Security, so only use it on the server, only after getAdmin() has confirmed
+// the caller is an admin, and only for things the normal client can't do
+// (creating staff login accounts).
 export function createSupabaseAdminClient() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceRoleKey) {

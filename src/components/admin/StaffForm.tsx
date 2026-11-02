@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { createStaffAccount } from "@/app/admin/staff/actions";
 import type { ActionState } from "@/lib/types";
 
 const initialState: ActionState = {};
@@ -8,20 +9,11 @@ const initialState: ActionState = {};
 const inputClass =
   "mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-orange-500";
 
-// Email + password form for creating a login (MotorMart staff or a shop
-// account). `shopId` is sent along when the account belongs to a shop.
-export default function AccountForm({
-  action,
-  title,
-  description,
-  shopId,
-}: {
-  action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
-  title: string;
-  description: string;
-  shopId?: string;
-}) {
-  const [state, formAction, pending] = useActionState(action, initialState);
+export default function StaffForm() {
+  const [state, formAction, pending] = useActionState(
+    createStaffAccount,
+    initialState
+  );
 
   return (
     <form
@@ -30,9 +22,11 @@ export default function AccountForm({
       action={formAction}
       className="space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
     >
-      {shopId && <input type="hidden" name="shop_id" value={shopId} />}
-      <h2 className="text-lg font-semibold">{title}</h2>
-      <p className="text-sm text-gray-600">{description}</p>
+      <h2 className="text-lg font-semibold">Add staff account</h2>
+      <p className="text-sm text-gray-600">
+        The new account can sign in straight away and has full admin access.
+        Share the password with them privately.
+      </p>
 
       <label className="block">
         <span className="text-sm font-medium text-gray-700">Email</span>

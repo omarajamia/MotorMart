@@ -8,18 +8,10 @@ export type Product = {
   price: number;
   stock_quantity: number;
   image_url: string | null;
-  shop: Shop | null;
-};
-
-export type Shop = {
-  name: string;
-  city: string | null;
-  phone: string | null;
 };
 
 export type AdminProduct = Product & {
   is_active: boolean;
-  shop_id: string;
 };
 
 export type ProductDetails = AdminProduct & {

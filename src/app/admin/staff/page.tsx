@@ -1,8 +1,7 @@
 import { Suspense } from "react";
 import NoAccess from "@/components/admin/NoAccess";
-import { createStaffAccount } from "@/app/admin/staff/actions";
-import AccountForm from "@/components/admin/AccountForm";
-import { requireAccount } from "@/lib/admin";
+import StaffForm from "@/components/admin/StaffForm";
+import { getAdmin } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
 
 export const instant = false;
@@ -21,14 +20,14 @@ export default function StaffPage() {
 }
 
 async function Staff() {
-  const { user, hasAccess, isOwner } = await requireAccount();
-  if (!hasAccess) {
+  const { user, isAdmin, isOwner } = await getAdmin();
+  if (!isAdmin) {
     return <NoAccess email={user.email} />;
   }
   if (!isOwner) {
     return (
       <p className="rounded-lg border border-gray-200 bg-white p-5 text-gray-700">
-        Only the MotorMart owner can manage staff accounts.
+        Only the store owner can manage staff accounts.
       </p>
     );
   }
@@ -95,11 +94,7 @@ async function Staff() {
         </ul>
       </div>
 
-      <AccountForm
-        action={createStaffAccount}
-        title="Add staff account"
-        description="For MotorMart team members. They can sign in straight away and manage every shop's products. Share the password with them privately."
-      />
+      <StaffForm />
     </div>
   );
 }

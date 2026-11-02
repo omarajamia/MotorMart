@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import LogoutButton from "@/components/admin/LogoutButton";
 import NoAccess from "@/components/admin/NoAccess";
 import ProductRow from "@/components/admin/ProductRow";
-import { requireAccount } from "@/lib/admin";
+import { getAdmin } from "@/lib/admin";
 import type { AdminProduct } from "@/lib/types";
 
 export const instant = false;
@@ -17,42 +17,30 @@ export default function AdminPage() {
 }
 
 async function AdminDashboard() {
-  const { supabase, user, hasAccess, shop } = await requireAccount();
+  const { supabase, user, isAdmin } = await getAdmin();
 
-  if (!hasAccess) {
+  if (!isAdmin) {
     return <NoAccess email={user.email} />;
   }
 
-  // Shop accounts can read other shops' public products, so limit them to
-  // their own shop explicitly. MotorMart admins see every shop.
-  let query = supabase
+  const { data, error } = await supabase
     .from("products")
     .select(
-      "id, name, part_number, brand, car_model, category, price, stock_quantity, image_url, is_active, shop_id, shop:shops(name, city, phone)"
+      "id, name, part_number, brand, car_model, category, price, stock_quantity, image_url, is_active"
     )
     .order("name");
-  if (shop) {
-    query = query.eq("shop_id", shop.id);
-  }
-
-  const { data, error } = await query.overrideTypes<
-    AdminProduct[],
-    { merge: false }
-  >();
 
   if (error) {
     console.error("Failed to load products for admin:", error);
   }
 
-  const products = data ?? [];
+  const products = (data ?? []) as AdminProduct[];
 
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">
-            {shop ? `${shop.name} – Products` : "All shops – Products"}
-          </h1>
+          <h1 className="text-2xl font-bold">Products</h1>
           <p className="mt-1 text-sm text-gray-600">
             Signed in as {user.email} · {products.length} product(s)
           </p>
@@ -90,11 +78,7 @@ async function AdminDashboard() {
             </thead>
             <tbody className="divide-y">
               {products.map((product) => (
-                <ProductRow
-                  key={product.id}
-                  product={product}
-                  showShop={!shop}
-                />
+                <ProductRow key={product.id} product={product} />
               ))}
             </tbody>
           </table>

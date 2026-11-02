@@ -8,17 +8,16 @@ export default async function Home() {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, name, part_number, brand, car_model, category, price, stock_quantity, image_url, shop:shops(name, city, phone)"
+      "id, name, part_number, brand, car_model, category, price, stock_quantity, image_url"
     )
     .eq("is_active", true)
-    .order("name")
-    .overrideTypes<Product[], { merge: false }>();
+    .order("name");
 
   if (error) {
     console.error("Failed to load products:", error);
   }
 
-  const products = data ?? [];
+  const products = (data ?? []) as Product[];
 
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900">

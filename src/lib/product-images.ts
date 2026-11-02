@@ -26,14 +26,9 @@ export function validateImage(file: File) {
   return null;
 }
 
-// Uploads a product photo into its shop's folder as the signed-in account
-// and returns its public URL.
-export async function uploadProductImage(
-  supabase: SupabaseClient,
-  shopId: string,
-  file: File
-) {
-  const path = `shops/${shopId}/${crypto.randomUUID()}.${EXTENSIONS[file.type]}`;
+// Uploads a product photo as the signed-in admin and returns its public URL.
+export async function uploadProductImage(supabase: SupabaseClient, file: File) {
+  const path = `products/${crypto.randomUUID()}.${EXTENSIONS[file.type]}`;
   const { error } = await supabase.storage
     .from(BUCKET)
     .upload(path, file, { contentType: file.type });

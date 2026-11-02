@@ -7,13 +7,7 @@ import type { ActionState, AdminProduct } from "@/lib/types";
 
 const initialState: ActionState = {};
 
-export default function ProductRow({
-  product,
-  showShop,
-}: {
-  product: AdminProduct;
-  showShop: boolean;
-}) {
+export default function ProductRow({ product }: { product: AdminProduct }) {
   const [saveState, saveAction, saving] = useActionState(
     updatePriceAndStock,
     initialState
@@ -37,11 +31,6 @@ export default function ProductRow({
           {product.part_number} · {product.brand} {product.car_model}
           {product.category ? ` · ${product.category}` : ""}
         </p>
-        {showShop && product.shop && (
-          <p className="text-xs font-medium text-orange-700">
-            {product.shop.name}
-          </p>
-        )}
       </td>
 
       <td className="px-4 py-3" colSpan={3}>

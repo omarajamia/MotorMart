@@ -15,12 +15,9 @@ const inputClass =
 export default function ProductForm({
   product,
   categories,
-  shops,
 }: {
   product?: ProductDetails;
   categories: string[];
-  // Only passed for MotorMart admins; shop accounts always use their shop.
-  shops?: { id: string; name: string }[];
 }) {
   const [state, formAction, pending] = useActionState(
     product ? updateProduct : createProduct,
@@ -35,27 +32,6 @@ export default function ProductForm({
       {product && <input type="hidden" name="id" value={product.id} />}
 
       <div className="grid gap-5 sm:grid-cols-2">
-        {shops && (
-          <label className="block sm:col-span-2">
-            <span className="text-sm font-medium text-gray-700">Shop *</span>
-            <select
-              name="shop_id"
-              required
-              defaultValue={product?.shop_id ?? ""}
-              className={inputClass}
-            >
-              <option value="" disabled>
-                Choose a shop
-              </option>
-              {shops.map((shop) => (
-                <option key={shop.id} value={shop.id}>
-                  {shop.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-
         <label className="block sm:col-span-2">
           <span className="text-sm font-medium text-gray-700">Name *</span>
           <input
