@@ -32,6 +32,4 @@ export type ProductDetails = AdminProduct & {
 export type ActionState = {
   error?: string;
   success?: string;
-  // Typed values to put back into the form after an error.
-  values?: Record<string, string>;
 };

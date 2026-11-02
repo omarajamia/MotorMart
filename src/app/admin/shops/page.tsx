@@ -4,7 +4,7 @@ import AccountForm from "@/components/admin/AccountForm";
 import NoAccess from "@/components/admin/NoAccess";
 import ShopForm from "@/components/admin/ShopForm";
 import ShopStatusButton from "@/components/admin/ShopStatusButton";
-import { requireAdminAccount } from "@/lib/admin";
+import { requireAccount } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
 
 export const instant = false;
@@ -15,7 +15,6 @@ type ShopRow = {
   phone: string | null;
   city: string | null;
   is_active: boolean;
-  owner_name: string | null;
 };
 
 export default function ShopsPage() {
@@ -36,7 +35,7 @@ export default function ShopsPage() {
 }
 
 async function Shops() {
-  const { supabase, user, hasAccess, isOwner } = await requireAdminAccount();
+  const { supabase, user, hasAccess, isOwner } = await requireAccount();
   if (!hasAccess) {
     return <NoAccess email={user.email} />;
   }
@@ -63,7 +62,7 @@ async function Shops() {
 
   const [{ data: shops, error }, { data: products }, { data: members }, { data: usersPage }] =
     await Promise.all([
-      supabase.from("shops").select("id, name, owner_name, phone, city, is_active").order("name"),
+      supabase.from("shops").select("id, name, phone, city, is_active").order("name"),
       supabase.from("products").select("shop_id"),
       adminClient.from("shop_members").select("user_id, shop_id"),
       adminClient.auth.admin.listUsers({ perPage: 1000 }),
@@ -96,8 +95,8 @@ async function Shops() {
               <div>
                 <h2 className="text-lg font-semibold">{shop.name}</h2>
                 <p className="mt-1 text-sm text-gray-600">
-                  {[shop.owner_name, shop.city, shop.phone].filter(Boolean).join(" · ") ||
-                    "No details yet"}
+                  {[shop.city, shop.phone].filter(Boolean).join(" · ") ||
+                    "No city or phone yet"}
                   {" · "}
                   {productCounts.get(shop.id) ?? 0} product(s)
                 </p>
@@ -122,13 +121,13 @@ async function Shops() {
 
             <details className="mt-4">
               <summary className="cursor-pointer text-sm font-medium text-orange-700 hover:underline">
-                Add another account for {shop.name} (e.g. an employee)
+                Add an account for {shop.name}
               </summary>
               <div className="mt-3">
                 <AccountForm
                   action={createShopAccount}
                   shopId={shop.id}
-                  title={`Another account for ${shop.name}`}
+                  title={`New account for ${shop.name}`}
                   description="This account can sign in straight away and manage only this shop's products. Share the password with them privately."
                 />
               </div>

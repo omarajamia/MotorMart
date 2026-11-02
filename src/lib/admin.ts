@@ -59,29 +59,10 @@ export async function getAccount() {
 
 // Checks the signed-in account on the server. Use it in every admin page and
 // Server Action; never trust the browser to say who someone is.
-export async function requireAccount(loginPath = "/admin/login") {
+export async function requireAccount() {
   const account = await loadAccount();
   if (!account) {
-    redirect(loginPath);
-  }
-  return account;
-}
-
-// For /shop pages: the signed-in shop account. MotorMart admins without a
-// shop are sent to /admin; anyone else gets `shop: null` (no access).
-export async function requireShopAccount() {
-  const account = await requireAccount("/shop/login");
-  if (!account.shop && account.isAdmin) {
-    redirect("/admin");
-  }
-  return account;
-}
-
-// For /admin pages: shop accounts belong in /shop.
-export async function requireAdminAccount() {
-  const account = await requireAccount();
-  if (account.shop && !account.isAdmin) {
-    redirect("/shop");
+    redirect("/admin/login");
   }
   return account;
 }

@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import NoAccess from "@/components/admin/NoAccess";
 import { createStaffAccount } from "@/app/admin/staff/actions";
 import AccountForm from "@/components/admin/AccountForm";
-import { requireAdminAccount } from "@/lib/admin";
+import { requireAccount } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
 
 export const instant = false;
@@ -21,7 +21,7 @@ export default function StaffPage() {
 }
 
 async function Staff() {
-  const { user, hasAccess, isOwner } = await requireAdminAccount();
+  const { user, hasAccess, isOwner } = await requireAccount();
   if (!hasAccess) {
     return <NoAccess email={user.email} />;
   }

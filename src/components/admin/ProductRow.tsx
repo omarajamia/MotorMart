@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { setProductActive, updatePriceAndStock } from "@/app/admin/actions";
-import { messages, type Lang } from "@/lib/i18n";
 import type { ActionState, AdminProduct } from "@/lib/types";
 
 const initialState: ActionState = {};
@@ -11,15 +10,10 @@ const initialState: ActionState = {};
 export default function ProductRow({
   product,
   showShop,
-  basePath = "/admin",
-  lang = "en",
 }: {
   product: AdminProduct;
   showShop: boolean;
-  basePath?: "/admin" | "/shop";
-  lang?: Lang;
 }) {
-  const t = messages[lang];
   const [saveState, saveAction, saving] = useActionState(
     updatePriceAndStock,
     initialState
@@ -34,7 +28,7 @@ export default function ProductRow({
     <tr className={product.is_active ? "" : "bg-gray-50 text-gray-500"}>
       <td className="px-4 py-3">
         <Link
-          href={`${basePath}/products/${product.id}/edit`}
+          href={`/admin/products/${product.id}/edit`}
           className="font-medium text-gray-900 hover:text-orange-600 hover:underline"
         >
           {product.name}
@@ -54,7 +48,7 @@ export default function ProductRow({
         <form action={saveAction} className="flex flex-wrap items-center gap-2">
           <input type="hidden" name="id" value={product.id} />
           <label className="flex items-center gap-1 text-sm">
-            <span className="sr-only">{t.price}</span>
+            <span className="sr-only">Price (JOD)</span>
             <input
               type="number"
               name="price"
@@ -64,10 +58,10 @@ export default function ProductRow({
               defaultValue={Number(product.price).toFixed(2)}
               className="w-24 rounded-md border border-gray-300 px-2 py-1"
             />
-            <span className="text-xs text-gray-500">{t.currency}</span>
+            <span className="text-xs text-gray-500">JOD</span>
           </label>
           <label className="flex items-center gap-1 text-sm">
-            <span className="sr-only">{t.stock}</span>
+            <span className="sr-only">Stock</span>
             <input
               type="number"
               name="stock_quantity"
@@ -77,14 +71,14 @@ export default function ProductRow({
               defaultValue={product.stock_quantity}
               className="w-20 rounded-md border border-gray-300 px-2 py-1"
             />
-            <span className="text-xs text-gray-500">{t.inStock}</span>
+            <span className="text-xs text-gray-500">in stock</span>
           </label>
           <button
             type="submit"
             disabled={saving}
             className="rounded-md bg-slate-900 px-3 py-1 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-60"
           >
-            {saving ? t.saving : t.save}
+            {saving ? "Saving…" : "Save"}
           </button>
           {message && (
             <span
@@ -112,14 +106,14 @@ export default function ProductRow({
                 : "rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700"
             }
           >
-            {product.is_active ? t.visible : t.hidden}
+            {product.is_active ? "Visible" : "Hidden"}
           </span>
           <button
             type="submit"
             disabled={changingVisibility}
             className="rounded-md border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100 disabled:opacity-60"
           >
-            {product.is_active ? t.hide : t.show}
+            {product.is_active ? "Hide" : "Show"}
           </button>
         </form>
       </td>

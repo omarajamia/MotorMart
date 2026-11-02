@@ -1,13 +1,8 @@
 "use server";
 
-// Sign-in and product actions shared by the admin area (/admin, English) and
-// the shop area (/shop, Arabic or English).
-
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
-import { getAccount, requireAccount } from "@/lib/admin";
-import { messages } from "@/lib/i18n";
-import { getShopLang } from "@/lib/i18n-server";
+import { requireAccount } from "@/lib/admin";
 import {
   getImageFile,
   removeProductImage,
@@ -18,88 +13,50 @@ import { parseProductForm, UUID_PATTERN } from "@/lib/products";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type { ActionState } from "@/lib/types";
 
-type Account = Awaited<ReturnType<typeof requireAccount>>;
-
-// Shop accounts get messages in their chosen language; admins get English.
-async function errorsFor(account: Account | null) {
-  return account?.shop
-    ? messages[await getShopLang()].errors
-    : messages.en.errors;
-}
-
-// Where an account's product list lives.
-function homeFor(account: Account) {
-  return account.shop ? "/shop" : "/admin";
-}
-
-async function signIn(formData: FormData, area: "admin" | "shop") {
-  const errors =
-    area === "shop" ? messages[await getShopLang()].errors : messages.en.errors;
+export async function login(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
 
   if (!email || !password) {
-    return { error: errors.enterEmailPassword };
+    return { error: "Enter your email and password." };
   }
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
-    return { error: errors.wrongLogin };
+    return { error: "Wrong email or password." };
   }
 
+  // Only MotorMart admins and shop accounts may stay signed in.
   const [{ data: isAdmin, error: adminError }, { data: shopId, error: shopError }] =
     await Promise.all([supabase.rpc("is_admin"), supabase.rpc("my_shop_id")]);
   if (adminError) console.error("Admin check failed:", adminError);
   if (shopError) console.error("Shop membership check failed:", shopError);
 
-  // Shop accounts use the shop login; MotorMart admins use the admin login.
-  if (area === "shop" && !shopId) {
+  if (isAdmin !== true && !shopId) {
     await supabase.auth.signOut();
-    return { error: isAdmin === true ? errors.noAccess : errors.notAShop };
-  }
-  if (area === "admin" && isAdmin !== true) {
-    await supabase.auth.signOut();
-    return { error: shopId ? errors.useShopLogin : errors.noAccess };
+    return { error: "This account doesn't have access." };
   }
 
-  return null;
-}
-
-export async function adminLogin(
-  _prev: ActionState,
-  formData: FormData
-): Promise<ActionState> {
-  const failure = await signIn(formData, "admin");
-  if (failure) return failure;
   redirect("/admin");
 }
 
-export async function shopLogin(
-  _prev: ActionState,
-  formData: FormData
-): Promise<ActionState> {
-  const failure = await signIn(formData, "shop");
-  if (failure) return failure;
-  redirect("/shop");
-}
-
 export async function logout() {
-  const account = await getAccount();
-  const loginPage = account?.shop ? "/shop/login" : "/admin/login";
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut();
-  redirect(loginPage);
+  redirect("/admin/login");
 }
 
 export async function updatePriceAndStock(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const account = await requireAccount();
-  const errors = await errorsFor(account);
-  if (!account.hasAccess) {
-    return { error: errors.noAccess };
+  const { supabase, hasAccess } = await requireAccount();
+  if (!hasAccess) {
+    return { error: "You don't have access." };
   }
 
   const id = String(formData.get("id") ?? "");
@@ -107,16 +64,16 @@ export async function updatePriceAndStock(
   const stock = Number(formData.get("stock_quantity"));
 
   if (!UUID_PATTERN.test(id)) {
-    return { error: errors.unknownProduct };
+    return { error: "Unknown product." };
   }
   if (!Number.isFinite(price) || price < 0 || price > 1_000_000) {
-    return { error: errors.price };
+    return { error: "Price must be a number of 0 or more." };
   }
   if (!Number.isInteger(stock) || stock < 0 || stock > 1_000_000) {
-    return { error: errors.stock };
+    return { error: "Stock must be a whole number of 0 or more." };
   }
 
-  const { data, error } = await account.supabase
+  const { data, error } = await supabase
     .from("products")
     .update({ price: Math.round(price * 100) / 100, stock_quantity: stock })
     .eq("id", id)
@@ -124,35 +81,30 @@ export async function updatePriceAndStock(
 
   if (error || !data?.length) {
     console.error("Failed to update product:", error);
-    return { error: errors.saveFailed };
+    return { error: "Couldn't save. Please try again." };
   }
 
   refresh();
-  return {
-    success: account.shop
-      ? messages[await getShopLang()].saved
-      : messages.en.saved,
-  };
+  return { success: "Saved" };
 }
 
 export async function setProductActive(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const account = await requireAccount();
-  const errors = await errorsFor(account);
-  if (!account.hasAccess) {
-    return { error: errors.noAccess };
+  const { supabase, hasAccess } = await requireAccount();
+  if (!hasAccess) {
+    return { error: "You don't have access." };
   }
 
   const id = String(formData.get("id") ?? "");
   const isActive = formData.get("is_active") === "true";
 
   if (!UUID_PATTERN.test(id)) {
-    return { error: errors.unknownProduct };
+    return { error: "Unknown product." };
   }
 
-  const { data, error } = await account.supabase
+  const { data, error } = await supabase
     .from("products")
     .update({ is_active: isActive })
     .eq("id", id)
@@ -160,12 +112,20 @@ export async function setProductActive(
 
   if (error || !data?.length) {
     console.error("Failed to change product visibility:", error);
-    return { error: errors.visibilityFailed };
+    return { error: "Couldn't change visibility. Please try again." };
   }
 
   refresh();
   return {};
 }
+
+function saveErrorMessage(error: { code?: string } | null) {
+  return error?.code === "23505"
+    ? "This shop already has a product with this part number."
+    : "Couldn't save. Please try again.";
+}
+
+type Account = Awaited<ReturnType<typeof requireAccount>>;
 
 // Which shop a product belongs to. Shop accounts always use their own shop;
 // MotorMart admins pick one in the form.
@@ -192,23 +152,22 @@ export async function createProduct(
 ): Promise<ActionState> {
   const account = await requireAccount();
   const { supabase } = account;
-  const errors = await errorsFor(account);
   if (!account.hasAccess) {
-    return { error: errors.noAccess };
+    return { error: "You don't have access." };
   }
 
-  const parsed = parseProductForm(formData, errors);
+  const parsed = parseProductForm(formData);
   if ("error" in parsed) {
     return { error: parsed.error };
   }
 
   const shopId = await resolveShopId(account, formData);
   if (!shopId) {
-    return { error: errors.chooseShop };
+    return { error: "Choose a shop." };
   }
 
   const image = getImageFile(formData);
-  const imageError = image && validateImage(image, errors);
+  const imageError = image && validateImage(image);
   if (imageError) {
     return { error: imageError };
   }
@@ -217,7 +176,7 @@ export async function createProduct(
     ? await uploadProductImage(supabase, shopId, image)
     : null;
   if (image && !imageUrl) {
-    return { error: errors.uploadFailed };
+    return { error: "Couldn't upload the image. Please try again." };
   }
 
   const { error } = await supabase
@@ -226,12 +185,10 @@ export async function createProduct(
   if (error) {
     console.error("Failed to create product:", error);
     await removeProductImage(supabase, imageUrl);
-    return {
-      error: error.code === "23505" ? errors.duplicatePart : errors.saveFailed,
-    };
+    return { error: saveErrorMessage(error) };
   }
 
-  redirect(homeFor(account));
+  redirect("/admin");
 }
 
 export async function updateProduct(
@@ -240,28 +197,27 @@ export async function updateProduct(
 ): Promise<ActionState> {
   const account = await requireAccount();
   const { supabase } = account;
-  const errors = await errorsFor(account);
   if (!account.hasAccess) {
-    return { error: errors.noAccess };
+    return { error: "You don't have access." };
   }
 
   const id = String(formData.get("id") ?? "");
   if (!UUID_PATTERN.test(id)) {
-    return { error: errors.unknownProduct };
+    return { error: "Unknown product." };
   }
 
-  const parsed = parseProductForm(formData, errors);
+  const parsed = parseProductForm(formData);
   if ("error" in parsed) {
     return { error: parsed.error };
   }
 
   const shopId = await resolveShopId(account, formData);
   if (!shopId) {
-    return { error: errors.chooseShop };
+    return { error: "Choose a shop." };
   }
 
   const image = getImageFile(formData);
-  const imageError = image && validateImage(image, errors);
+  const imageError = image && validateImage(image);
   if (imageError) {
     return { error: imageError };
   }
@@ -272,7 +228,7 @@ export async function updateProduct(
     .eq("id", id)
     .maybeSingle<{ image_url: string | null }>();
   if (!current) {
-    return { error: errors.productGone };
+    return { error: "This product no longer exists." };
   }
 
   // A new photo replaces the old one; "remove image" clears it; otherwise
@@ -281,7 +237,7 @@ export async function updateProduct(
   if (image) {
     imageUrl = await uploadProductImage(supabase, shopId, image);
     if (!imageUrl) {
-      return { error: errors.uploadFailed };
+      return { error: "Couldn't upload the image. Please try again." };
     }
   } else if (formData.get("remove_image") === "on") {
     imageUrl = null;
@@ -298,34 +254,31 @@ export async function updateProduct(
     if (image) {
       await removeProductImage(supabase, imageUrl);
     }
-    return {
-      error: error?.code === "23505" ? errors.duplicatePart : errors.saveFailed,
-    };
+    return { error: saveErrorMessage(error) };
   }
 
   if (imageUrl !== current.image_url) {
     await removeProductImage(supabase, current.image_url);
   }
 
-  redirect(homeFor(account));
+  redirect("/admin");
 }
 
 export async function deleteProduct(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const account = await requireAccount();
-  const errors = await errorsFor(account);
-  if (!account.hasAccess) {
-    return { error: errors.noAccess };
+  const { supabase, hasAccess } = await requireAccount();
+  if (!hasAccess) {
+    return { error: "You don't have access." };
   }
 
   const id = String(formData.get("id") ?? "");
   if (!UUID_PATTERN.test(id)) {
-    return { error: errors.unknownProduct };
+    return { error: "Unknown product." };
   }
 
-  const { data, error } = await account.supabase
+  const { data, error } = await supabase
     .from("products")
     .delete()
     .eq("id", id)
@@ -333,10 +286,10 @@ export async function deleteProduct(
 
   if (error || !data?.length) {
     console.error("Failed to delete product:", error);
-    return { error: errors.deleteFailed };
+    return { error: "Couldn't delete. Please try again." };
   }
 
-  await removeProductImage(account.supabase, data[0].image_url);
+  await removeProductImage(supabase, data[0].image_url);
 
-  redirect(homeFor(account));
+  redirect("/admin");
 }
