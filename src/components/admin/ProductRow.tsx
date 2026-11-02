@@ -20,8 +20,12 @@ export default function ProductRow({ product }: { product: AdminProduct }) {
   const isError = Boolean(saveState.error ?? visibilityState.error);
 
   return (
-    <tr className={product.is_active ? "" : "bg-gray-50 text-gray-500"}>
-      <td className="px-4 py-3">
+    <tr
+      className={`block py-2 md:table-row md:py-0 ${
+        product.is_active ? "" : "bg-gray-50 text-gray-500"
+      }`}
+    >
+      <td className="block px-4 py-2 md:table-cell md:py-3">
         <Link
           href={`/admin/products/${product.id}/edit`}
           className="font-medium text-gray-900 hover:text-orange-600 hover:underline"
@@ -35,7 +39,7 @@ export default function ProductRow({ product }: { product: AdminProduct }) {
         </p>
       </td>
 
-      <td className="px-4 py-3" colSpan={3}>
+      <td className="block px-4 py-2 md:table-cell md:py-3" colSpan={3}>
         <form
           onSubmit={submitKeepingFields(saveAction)}
           className="flex flex-wrap items-center gap-2"
@@ -85,7 +89,7 @@ export default function ProductRow({ product }: { product: AdminProduct }) {
         </form>
       </td>
 
-      <td className="px-4 py-3">
+      <td className="block px-4 py-2 md:table-cell md:py-3">
         <form action={visibilityAction} className="flex items-center gap-2">
           <input type="hidden" name="id" value={product.id} />
           <input
@@ -112,7 +116,7 @@ export default function ProductRow({ product }: { product: AdminProduct }) {
         </form>
       </td>
 
-      <td className="px-4 py-3">
+      <td className="block px-4 py-2 md:table-cell md:py-3">
         <Link
           href={`/admin/products/${product.id}/edit`}
           className="inline-block rounded-md bg-orange-500 px-3 py-1 text-sm font-medium text-white hover:bg-orange-600"
