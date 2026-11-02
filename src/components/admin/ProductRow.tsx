@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { setProductActive, updatePriceAndStock } from "@/app/admin/actions";
+import { submitKeepingFields } from "@/lib/form-submit";
 import type { ActionState, AdminProduct } from "@/lib/types";
 
 const initialState: ActionState = {};
@@ -28,13 +29,17 @@ export default function ProductRow({ product }: { product: AdminProduct }) {
           {product.name}
         </Link>
         <p className="text-xs text-gray-500">
-          {product.part_number} · {product.brand} {product.car_model}
+          {[product.part_number, ...(product.alt_part_numbers ?? [])].join(" / ")}{" "}
+          · {product.brand} {product.car_model}
           {product.category ? ` · ${product.category}` : ""}
         </p>
       </td>
 
       <td className="px-4 py-3" colSpan={3}>
-        <form action={saveAction} className="flex flex-wrap items-center gap-2">
+        <form
+          onSubmit={submitKeepingFields(saveAction)}
+          className="flex flex-wrap items-center gap-2"
+        >
           <input type="hidden" name="id" value={product.id} />
           <label className="flex items-center gap-1 text-sm">
             <span className="sr-only">Price (JOD)</span>
@@ -105,6 +110,15 @@ export default function ProductRow({ product }: { product: AdminProduct }) {
             {product.is_active ? "Hide" : "Show"}
           </button>
         </form>
+      </td>
+
+      <td className="px-4 py-3">
+        <Link
+          href={`/admin/products/${product.id}/edit`}
+          className="inline-block rounded-md bg-orange-500 px-3 py-1 text-sm font-medium text-white hover:bg-orange-600"
+        >
+          Edit
+        </Link>
       </td>
     </tr>
   );

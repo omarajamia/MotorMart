@@ -10,10 +10,16 @@ const EXTENSIONS: Record<string, string> = {
   "image/webp": "webp",
 };
 
-// The uploaded file from a form, or null when none was chosen.
+// The uploaded photo from a form (taken with the camera or chosen from
+// files), or null when none was given.
 export function getImageFile(formData: FormData) {
-  const file = formData.get("image");
-  return file instanceof File && file.size > 0 ? file : null;
+  for (const field of ["image_camera", "image"]) {
+    const file = formData.get(field);
+    if (file instanceof File && file.size > 0) {
+      return file;
+    }
+  }
+  return null;
 }
 
 export function validateImage(file: File) {

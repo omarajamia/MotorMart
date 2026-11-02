@@ -117,6 +117,46 @@ export async function setProductActive(
   return {};
 }
 
+type AdminSupabase = Awaited<ReturnType<typeof getAdmin>>["supabase"];
+
+// The brand, car model and category must be ones from the Catalog lists.
+async function checkCatalog(
+  supabase: AdminSupabase,
+  product: { brand: string; car_model: string; category: string | null }
+) {
+  const { data: brand } = await supabase
+    .from("brands")
+    .select("id")
+    .eq("name", product.brand)
+    .maybeSingle<{ id: string }>();
+  if (!brand) {
+    return "Choose a brand from the list.";
+  }
+
+  const { data: model } = await supabase
+    .from("car_models")
+    .select("id")
+    .eq("brand_id", brand.id)
+    .eq("name", product.car_model)
+    .maybeSingle();
+  if (!model) {
+    return "Choose a car model from the list for this brand.";
+  }
+
+  if (product.category) {
+    const { data: category } = await supabase
+      .from("categories")
+      .select("id")
+      .eq("name", product.category)
+      .maybeSingle();
+    if (!category) {
+      return "Choose a category from the list.";
+    }
+  }
+
+  return null;
+}
+
 function saveErrorMessage(error: { code?: string } | null) {
   return error?.code === "23505"
     ? "A product with this part number already exists."
@@ -135,6 +175,11 @@ export async function createProduct(
   const parsed = parseProductForm(formData);
   if ("error" in parsed) {
     return { error: parsed.error };
+  }
+
+  const catalogError = await checkCatalog(supabase, parsed.data);
+  if (catalogError) {
+    return { error: catalogError };
   }
 
   const image = getImageFile(formData);
@@ -177,6 +222,11 @@ export async function updateProduct(
   const parsed = parseProductForm(formData);
   if ("error" in parsed) {
     return { error: parsed.error };
+  }
+
+  const catalogError = await checkCatalog(supabase, parsed.data);
+  if (catalogError) {
+    return { error: catalogError };
   }
 
   const image = getImageFile(formData);

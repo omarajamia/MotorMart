@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import NoAccess from "@/components/admin/NoAccess";
 import ProductForm from "@/components/admin/ProductForm";
-import { getAdmin, getCategories } from "@/lib/admin";
+import { getAdmin } from "@/lib/admin";
+import { loadCatalog } from "@/lib/catalog";
 
 export const instant = false;
 
@@ -24,5 +25,5 @@ async function NewProduct() {
     return <NoAccess email={user.email} />;
   }
 
-  return <ProductForm categories={await getCategories(supabase)} />;
+  return <ProductForm catalog={await loadCatalog(supabase)} />;
 }

@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { createStaffAccount } from "@/app/admin/staff/actions";
+import { submitKeepingFields } from "@/lib/form-submit";
 import type { ActionState } from "@/lib/types";
 
 const initialState: ActionState = {};
@@ -19,7 +20,7 @@ export default function StaffForm() {
     <form
       // Clear the fields after each successful account.
       key={state.success}
-      action={formAction}
+      onSubmit={submitKeepingFields(formAction)}
       className="space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
     >
       <h2 className="text-lg font-semibold">Add staff account</h2>
@@ -27,6 +28,17 @@ export default function StaffForm() {
         The new account can sign in straight away and has full admin access.
         Share the password with them privately.
       </p>
+
+      <label className="block">
+        <span className="text-sm font-medium text-gray-700">Name</span>
+        <input
+          name="full_name"
+          required
+          maxLength={100}
+          autoComplete="off"
+          className={inputClass}
+        />
+      </label>
 
       <label className="block">
         <span className="text-sm font-medium text-gray-700">Email</span>

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import LogoutButton from "@/components/admin/LogoutButton";
 import NoAccess from "@/components/admin/NoAccess";
 import ProductRow from "@/components/admin/ProductRow";
 import { getAdmin } from "@/lib/admin";
@@ -26,7 +25,7 @@ async function AdminDashboard() {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, name, part_number, brand, car_model, category, price, stock_quantity, image_url, is_active"
+      "id, name, name_ar, part_number, alt_part_numbers, brand, car_model, category, description, description_ar, price, stock_quantity, image_url, is_active"
     )
     .order("name");
 
@@ -42,7 +41,7 @@ async function AdminDashboard() {
         <div>
           <h1 className="text-2xl font-bold">Products</h1>
           <p className="mt-1 text-sm text-gray-600">
-            Signed in as {user.email} · {products.length} product(s)
+            Signed in as {user.user_metadata?.full_name ?? user.email} · {products.length} product(s)
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -52,7 +51,6 @@ async function AdminDashboard() {
           >
             + Add product
           </Link>
-          <LogoutButton />
         </div>
       </div>
 
@@ -74,6 +72,9 @@ async function AdminDashboard() {
                   Price &amp; stock
                 </th>
                 <th className="px-4 py-3 font-medium">Shop visibility</th>
+                <th className="px-4 py-3 font-medium">
+                  <span className="sr-only">Edit</span>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y">

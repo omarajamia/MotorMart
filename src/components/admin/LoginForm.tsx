@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { login } from "@/app/admin/actions";
+import { submitKeepingFields } from "@/lib/form-submit";
 import type { ActionState } from "@/lib/types";
 
 const initialState: ActionState = {};
@@ -11,7 +12,7 @@ export default function LoginForm() {
 
   return (
     <form
-      action={formAction}
+      onSubmit={submitKeepingFields(formAction)}
       className="mx-auto mt-6 max-w-sm space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
     >
       <label className="block">

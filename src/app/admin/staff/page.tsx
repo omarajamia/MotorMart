@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import NoAccess from "@/components/admin/NoAccess";
 import StaffForm from "@/components/admin/StaffForm";
+import StaffRow from "@/components/admin/StaffRow";
 import { getAdmin } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
 
@@ -58,8 +59,14 @@ async function Staff() {
     console.error("Failed to load staff list:", error);
   }
 
-  const emails = new Map(
-    (usersPage?.users ?? []).map((account) => [account.id, account.email])
+  const accounts = new Map(
+    (usersPage?.users ?? []).map((account) => [
+      account.id,
+      {
+        name: account.user_metadata?.full_name as string | undefined,
+        email: account.email,
+      },
+    ])
   );
 
   return (
@@ -70,26 +77,14 @@ async function Staff() {
         </h2>
         <ul className="divide-y">
           {(admins ?? []).map((admin) => (
-            <li
+            <StaffRow
               key={admin.user_id}
-              className="flex items-center justify-between px-5 py-3 text-sm"
-            >
-              <span>
-                {emails.get(admin.user_id) ?? "Unknown account"}
-                {admin.user_id === user.id && (
-                  <span className="ml-2 text-xs text-gray-500">(you)</span>
-                )}
-              </span>
-              <span
-                className={
-                  admin.role === "owner"
-                    ? "rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800"
-                    : "rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700"
-                }
-              >
-                {admin.role === "owner" ? "Owner" : "Staff"}
-              </span>
-            </li>
+              userId={admin.user_id}
+              name={accounts.get(admin.user_id)?.name}
+              email={accounts.get(admin.user_id)?.email}
+              role={admin.role}
+              isSelf={admin.user_id === user.id}
+            />
           ))}
         </ul>
       </div>

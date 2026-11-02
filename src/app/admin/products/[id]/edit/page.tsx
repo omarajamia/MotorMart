@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import DeleteProductButton from "@/components/admin/DeleteProductButton";
 import NoAccess from "@/components/admin/NoAccess";
 import ProductForm from "@/components/admin/ProductForm";
-import { getAdmin, getCategories } from "@/lib/admin";
+import { getAdmin } from "@/lib/admin";
+import { loadCatalog } from "@/lib/catalog";
 import { UUID_PATTERN } from "@/lib/products";
 import type { ProductDetails } from "@/lib/types";
 
@@ -38,7 +39,7 @@ async function EditProduct({
     ? await supabase
         .from("products")
         .select(
-          "id, name, part_number, brand, car_model, year_from, year_to, category, description, price, stock_quantity, image_url, is_active"
+          "id, name, name_ar, part_number, alt_part_numbers, brand, car_model, year_from, year_to, category, description, description_ar, price, stock_quantity, image_url, is_active"
         )
         .eq("id", id)
         .maybeSingle<ProductDetails>()
@@ -59,7 +60,7 @@ async function EditProduct({
     <div className="space-y-8">
       <ProductForm
         product={product}
-        categories={await getCategories(supabase)}
+        catalog={await loadCatalog(supabase)}
       />
       <DeleteProductButton id={product.id} name={product.name} />
     </div>

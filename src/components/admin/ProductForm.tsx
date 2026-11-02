@@ -2,9 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createProduct, updateProduct } from "@/app/admin/actions";
-import { BRANDS } from "@/lib/products";
+import PhotoPicker from "@/components/admin/PhotoPicker";
+import { shrinkPhotosInForm } from "@/lib/compress-image";
+import { submitKeepingFields } from "@/lib/form-submit";
+import type { Catalog } from "@/lib/catalog";
 import type { ActionState, ProductDetails } from "@/lib/types";
 
 const initialState: ActionState = {};
@@ -14,19 +17,35 @@ const inputClass =
 
 export default function ProductForm({
   product,
-  categories,
+  catalog,
 }: {
   product?: ProductDetails;
-  categories: string[];
+  catalog: Catalog;
 }) {
+  // The car model list depends on the chosen brand.
+  const [brand, setBrand] = useState(product?.brand ?? "");
+  const [model, setModel] = useState(product?.car_model ?? "");
+  const brandId = catalog.brands.find((item) => item.name === brand)?.id;
+  const models = catalog.models.filter((item) => item.brand_id === brandId);
+
   const [state, formAction, pending] = useActionState(
     product ? updateProduct : createProduct,
     initialState
   );
+  // True while a large photo is being shrunk, before the form is sent.
+  const [preparing, setPreparing] = useState(false);
+  const busy = pending || preparing;
 
   return (
     <form
-      action={formAction}
+      onSubmit={submitKeepingFields(formAction, async (formData) => {
+        setPreparing(true);
+        try {
+          await shrinkPhotosInForm(formData, ["image_camera", "image"]);
+        } finally {
+          setPreparing(false);
+        }
+      })}
       className="space-y-5 rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
     >
       {product && <input type="hidden" name="id" value={product.id} />}
@@ -42,6 +61,24 @@ export default function ProductForm({
             placeholder="e.g. Front brake pads"
             className={inputClass}
           />
+        </label>
+
+        <label className="block sm:col-span-2">
+          <span className="text-sm font-medium text-gray-700">
+            Name in Arabic (optional)
+          </span>
+          <input
+            name="name_ar"
+            maxLength={200}
+            dir="rtl"
+            defaultValue={product?.name_ar ?? ""}
+            placeholder="مثال: فحمات فرامل أمامية"
+            className={inputClass}
+          />
+          <span className="mt-1 block text-xs text-gray-500">
+            Shown to visitors browsing in Arabic. Leave empty to show the
+            English name.
+          </span>
         </label>
 
         <label className="block">
@@ -60,19 +97,36 @@ export default function ProductForm({
 
         <label className="block">
           <span className="text-sm font-medium text-gray-700">Category</span>
-          <input
+          <select
             name="category"
-            list="category-options"
-            maxLength={100}
             defaultValue={product?.category ?? ""}
-            placeholder="e.g. Brakes"
+            className={inputClass}
+          >
+            <option value="">No category</option>
+            {catalog.categories.map((category) => (
+              <option key={category.id} value={category.name}>
+                {category.name}
+                {category.name_ar ? ` – ${category.name_ar}` : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="block sm:col-span-2">
+          <span className="text-sm font-medium text-gray-700">
+            Other part numbers
+          </span>
+          <textarea
+            name="alt_part_numbers"
+            rows={2}
+            defaultValue={product?.alt_part_numbers?.join("\n") ?? ""}
+            placeholder={"One per line or separated by commas, e.g.\n41060-4M490, 05.60.042"}
             className={inputClass}
           />
-          <datalist id="category-options">
-            {categories.map((category) => (
-              <option key={category} value={category} />
-            ))}
-          </datalist>
+          <span className="mt-1 block text-xs text-gray-500">
+            Other numbers this part is sold under (OEM or other brands). Customers
+            can search by any of them.
+          </span>
         </label>
 
         <label className="block">
@@ -80,15 +134,20 @@ export default function ProductForm({
           <select
             name="brand"
             required
-            defaultValue={product?.brand ?? ""}
+            value={brand}
+            onChange={(event) => {
+              setBrand(event.target.value);
+              setModel("");
+            }}
             className={inputClass}
           >
             <option value="" disabled>
               Choose a brand
             </option>
-            {BRANDS.map((brand) => (
-              <option key={brand} value={brand}>
-                {brand}
+            {catalog.brands.map((item) => (
+              <option key={item.id} value={item.name}>
+                {item.name}
+                {item.name_ar ? ` – ${item.name_ar}` : ""}
               </option>
             ))}
           </select>
@@ -98,15 +157,33 @@ export default function ProductForm({
           <span className="text-sm font-medium text-gray-700">
             Car model *
           </span>
-          <input
+          <select
             name="car_model"
             required
-            maxLength={100}
-            defaultValue={product?.car_model}
-            placeholder="e.g. Cerato"
+            value={model}
+            onChange={(event) => setModel(event.target.value)}
+            disabled={!brand}
             className={inputClass}
-          />
+          >
+            <option value="" disabled>
+              {brand ? "Choose a model" : "Choose a brand first"}
+            </option>
+            {models.map((item) => (
+              <option key={item.id} value={item.name}>
+                {item.name}
+                {item.name_ar ? ` – ${item.name_ar}` : ""}
+              </option>
+            ))}
+          </select>
         </label>
+
+        <p className="text-xs text-gray-500 sm:col-span-2">
+          Missing a brand, model or category?{" "}
+          <Link href="/admin/catalog" className="text-orange-700 hover:underline">
+            Add it on the Catalog page
+          </Link>{" "}
+          first.
+        </p>
 
         <label className="block">
           <span className="text-sm font-medium text-gray-700">Year from</span>
@@ -189,15 +266,11 @@ export default function ProductForm({
               </label>
             </div>
           )}
-          <input
-            type="file"
-            name="image"
-            accept="image/jpeg,image/png,image/webp"
-            className="mt-2 block w-full text-sm text-gray-700 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-medium hover:file:bg-slate-200"
-          />
+          <PhotoPicker />
           <p className="mt-1 text-xs text-gray-500">
-            JPEG, PNG or WebP, up to 5 MB.
-            {product?.image_url && " Choosing a new photo replaces the current one."}
+            JPEG, PNG or WebP, up to 5 MB. &quot;Take photo&quot; opens the
+            camera on a phone or tablet.
+            {product?.image_url && " A new photo replaces the current one."}
           </p>
         </div>
 
@@ -211,6 +284,21 @@ export default function ProductForm({
             maxLength={2000}
             defaultValue={product?.description ?? ""}
             placeholder="What the part is, what it fits, any notes for customers"
+            className={inputClass}
+          />
+        </label>
+
+        <label className="block sm:col-span-2">
+          <span className="text-sm font-medium text-gray-700">
+            Description in Arabic (optional)
+          </span>
+          <textarea
+            name="description_ar"
+            rows={4}
+            maxLength={2000}
+            dir="rtl"
+            defaultValue={product?.description_ar ?? ""}
+            placeholder="الوصف بالعربي"
             className={inputClass}
           />
         </label>
@@ -235,10 +323,10 @@ export default function ProductForm({
       <div className="flex items-center gap-3">
         <button
           type="submit"
-          disabled={pending}
+          disabled={busy}
           className="rounded-lg bg-orange-500 px-5 py-2 font-medium text-white hover:bg-orange-600 disabled:opacity-60"
         >
-          {pending ? "Saving…" : product ? "Save changes" : "Add product"}
+          {busy ? "Saving…" : product ? "Save changes" : "Add product"}
         </button>
         <Link href="/admin" className="text-sm text-gray-600 hover:underline">
           Cancel

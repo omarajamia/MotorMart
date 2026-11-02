@@ -40,17 +40,3 @@ export async function getAdmin() {
     isOwner: isAdmin === true && adminRow?.role === "owner",
   };
 }
-
-type AdminSupabase = Awaited<ReturnType<typeof getAdmin>>["supabase"];
-
-// Existing categories, offered as suggestions in the product form.
-export async function getCategories(supabase: AdminSupabase) {
-  const { data } = await supabase
-    .from("products")
-    .select("category")
-    .not("category", "is", null);
-
-  return [
-    ...new Set((data ?? []).map((row) => row.category as string)),
-  ].sort();
-}
