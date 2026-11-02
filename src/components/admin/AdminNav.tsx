@@ -9,7 +9,7 @@ export default function AdminNav() {
   const isLoginPage = usePathname() === "/admin/login";
 
   return (
-    <nav className="flex items-center gap-5 text-sm text-gray-300">
+    <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-gray-300">
       {!isLoginPage && (
         <>
           <Link href="/admin" className="hover:text-white">
@@ -27,7 +27,7 @@ export default function AdminNav() {
         View shop
       </Link>
       {!isLoginPage && (
-        <form action={logout}>
+        <form action={logout} className="ms-auto md:ms-0">
           <button
             type="submit"
             className="rounded-lg border border-slate-600 px-3 py-1 text-gray-200 hover:bg-slate-800 hover:text-white"

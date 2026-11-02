@@ -64,8 +64,9 @@ async function AdminDashboard() {
         </p>
       ) : (
         <div className="mt-8 overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b bg-gray-50 text-xs uppercase text-gray-500">
+          {/* On phones each product is a stacked card; from md up, a table. */}
+          <table className="block w-full text-left text-sm md:table">
+            <thead className="hidden border-b bg-gray-50 text-xs uppercase text-gray-500 md:table-header-group">
               <tr>
                 <th className="px-4 py-3 font-medium">Product</th>
                 <th className="px-4 py-3 font-medium" colSpan={3}>
@@ -77,7 +78,7 @@ async function AdminDashboard() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="block divide-y md:table-row-group">
               {products.map((product) => (
                 <ProductRow key={product.id} product={product} />
               ))}
