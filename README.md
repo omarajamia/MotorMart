@@ -1,6 +1,6 @@
-# MotorMart
+# السوق الاردني لقطع السيارات – Jordan Auto Parts Market
 
-MotorMart is a web store for car spare parts. It currently supports **Kia**, **Hyundai** and **Nissan**.
+A bilingual (Arabic/English) web store for car spare parts (project codename: MotorMart). It currently supports **Kia**, **Hyundai** and **Nissan**.
 
 Customers can browse active products and filter them by search text, brand, car model, category and stock. Prices are shown in JOD.
 

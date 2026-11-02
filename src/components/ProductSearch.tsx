@@ -1,56 +1,91 @@
-
 "use client";
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
+import { partRequestMessage, whatsappLink } from "@/lib/contact";
+import type { Catalog } from "@/lib/catalog";
+import { catalogName, localize, messages, type Lang } from "@/lib/i18n";
 import type { Product } from "@/lib/types";
 
-export default function ProductSearch({ products }: { products: Product[] }) {
+export default function ProductSearch({
+  products,
+  catalog,
+  lang,
+}: {
+  products: Product[];
+  catalog: Catalog;
+  lang: Lang;
+}) {
+  const t = messages[lang];
   const [search, setSearch] = useState("");
+  // Filters hold the English names stored on products; options and cards
+  // show the names in the chosen language.
   const [brand, setBrand] = useState("All");
   const [model, setModel] = useState("All");
   const [category, setCategory] = useState("All");
   const [inStockOnly, setInStockOnly] = useState(false);
 
-  const models = useMemo(
-    () =>
-      [...new Set(
-        products
-          .filter((p) => brand === "All" || p.brand === brand)
-          .map((p) => p.car_model)
-      )].sort(),
-    [products, brand]
+  const shown = useMemo(
+    () => products.map((p) => ({ ...p, text: localize(p, lang, catalog) })),
+    [products, lang, catalog]
   );
 
-  const categories = useMemo(
+  // Only offer brands, models and categories that have products.
+  const brandOptions = useMemo(
+    () => catalog.brands.filter((b) => products.some((p) => p.brand === b.name)),
+    [catalog, products]
+  );
+  const modelOptions = useMemo(() => {
+    const brandIds = new Set(
+      catalog.brands
+        .filter((b) => brand === "All" || b.name === brand)
+        .map((b) => b.id)
+    );
+    return catalog.models.filter(
+      (m) =>
+        brandIds.has(m.brand_id) &&
+        products.some(
+          (p) =>
+            p.car_model === m.name &&
+            catalog.brands.find((b) => b.name === p.brand)?.id === m.brand_id
+        )
+    );
+  }, [catalog, products, brand]);
+  const categoryOptions = useMemo(
     () =>
-      [...new Set(
-        products
-          .map((p) => p.category)
-          .filter((c): c is string => Boolean(c))
-      )].sort(),
-    [products]
+      catalog.categories.filter((c) =>
+        products.some((p) => p.category === c.name)
+      ),
+    [catalog, products]
   );
 
-  const filteredProducts = products.filter((p) => {
-    const term = search.trim().toLowerCase();
+  // What the customer was searching for, sent along in the WhatsApp message.
+  const lookingFor = [
+    search.trim(),
+    brand !== "All" &&
+      catalogName(catalog.brands.find((b) => b.name === brand), brand, lang),
+    model !== "All" &&
+      catalogName(modelOptions.find((m) => m.name === model), model, lang),
+    category !== "All" &&
+      catalogName(
+        catalog.categories.find((c) => c.name === category),
+        category,
+        lang
+      ),
+  ]
+    .filter(Boolean)
+    .join(" ");
 
-    const matchesSearch =
-      !term ||
-      p.name.toLowerCase().includes(term) ||
-      p.part_number.toLowerCase().includes(term) ||
-      p.brand.toLowerCase().includes(term) ||
-      p.car_model.toLowerCase().includes(term) ||
-      (p.category ?? "").toLowerCase().includes(term);
-
-    return (
-      matchesSearch &&
+  const term = search.trim().toLowerCase();
+  const filteredProducts = shown.filter(
+    (p) =>
+      // Search matches both the Arabic and English text.
+      (!term || p.text.searchText.includes(term)) &&
       (brand === "All" || p.brand === brand) &&
       (model === "All" || p.car_model === model) &&
       (category === "All" || p.category === category) &&
       (!inStockOnly || p.stock_quantity > 0)
-    );
-  });
+  );
 
   return (
     <div>
@@ -58,11 +93,14 @@ export default function ProductSearch({ products }: { products: Product[] }) {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search name or part number..."
+          type="search"
+          aria-label={t.searchPlaceholder}
+          placeholder={t.searchPlaceholder}
           className="rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-orange-500"
         />
 
         <select
+          aria-label={t.allBrands}
           value={brand}
           onChange={(e) => {
             setBrand(e.target.value);
@@ -70,34 +108,41 @@ export default function ProductSearch({ products }: { products: Product[] }) {
           }}
           className="rounded-lg border border-gray-300 px-4 py-3"
         >
-          <option value="All">All brands</option>
-          <option value="Kia">Kia</option>
-          <option value="Nissan">Nissan</option>
-          <option value="Hyundai">Hyundai</option>
-        </select>
-
-        <select
-          value={model}
-          onChange={(e) => setModel(e.target.value)}
-          className="rounded-lg border border-gray-300 px-4 py-3"
-        >
-          <option value="All">All models</option>
-          {models.map((item) => (
-            <option key={item} value={item}>
-              {item}
+          <option value="All">{t.allBrands}</option>
+          {brandOptions.map((item) => (
+            <option key={item.id} value={item.name}>
+              {catalogName(item, item.name, lang)}
             </option>
           ))}
         </select>
 
         <select
+          aria-label={t.allModels}
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+          className="rounded-lg border border-gray-300 px-4 py-3"
+        >
+          <option value="All">{t.allModels}</option>
+          {/* The same model name can exist under two brands; list it once. */}
+          {[...new Map(modelOptions.map((m) => [m.name, m])).values()].map(
+            (item) => (
+              <option key={item.id} value={item.name}>
+                {catalogName(item, item.name, lang)}
+              </option>
+            )
+          )}
+        </select>
+
+        <select
+          aria-label={t.allCategories}
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           className="rounded-lg border border-gray-300 px-4 py-3"
         >
-          <option value="All">All categories</option>
-          {categories.map((item) => (
-            <option key={item} value={item}>
-              {item}
+          <option value="All">{t.allCategories}</option>
+          {categoryOptions.map((item) => (
+            <option key={item.id} value={item.name}>
+              {catalogName(item, item.name, lang)}
             </option>
           ))}
         </select>
@@ -109,12 +154,12 @@ export default function ProductSearch({ products }: { products: Product[] }) {
             onChange={(e) => setInStockOnly(e.target.checked)}
             className="h-4 w-4 accent-orange-500"
           />
-          Show in-stock products only
+          {t.inStockOnly}
         </label>
 
         <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2 lg:col-span-4">
           <p className="text-sm text-gray-600">
-            {filteredProducts.length} product(s) found
+            {t.found(filteredProducts.length)}
           </p>
           <button
             type="button"
@@ -127,17 +172,23 @@ export default function ProductSearch({ products }: { products: Product[] }) {
             }}
             className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium hover:bg-slate-200"
           >
-            Clear filters
+            {t.clearFilters}
           </button>
         </div>
       </div>
 
       {filteredProducts.length === 0 ? (
         <div className="mt-8 rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
-          <h3 className="text-xl font-semibold">No matching products</h3>
-          <p className="mt-2 text-gray-600">
-            Try another search or clear your filters.
-          </p>
+          <h3 className="text-xl font-semibold">{t.noMatchesTitle}</h3>
+          <p className="mt-2 text-gray-600">{t.noMatchesBody}</p>
+          <a
+            href={whatsappLink(partRequestMessage(lang, lookingFor))}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 inline-block rounded-lg bg-green-600 px-5 py-2.5 font-medium text-white hover:bg-green-700"
+          >
+            {t.askOnWhatsapp}
+          </a>
         </div>
       ) : (
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -150,7 +201,7 @@ export default function ProductSearch({ products }: { products: Product[] }) {
                 <div className="relative h-48 w-full">
                   <Image
                     src={product.image_url}
-                    alt={product.name}
+                    alt={product.text.name}
                     fill
                     sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                     className="object-cover"
@@ -158,30 +209,42 @@ export default function ProductSearch({ products }: { products: Product[] }) {
                 </div>
               ) : (
                 <div className="flex h-48 items-center justify-center bg-gray-100 text-gray-400">
-                  No image available
+                  {t.noImage}
                 </div>
               )}
 
               <div className="p-5">
                 <p className="text-sm font-medium text-orange-600">
-                  {product.brand}
+                  {product.text.brand}
                 </p>
-                <h3 className="mt-1 text-lg font-bold">{product.name}</h3>
+                <h3 className="mt-1 text-lg font-bold">{product.text.name}</h3>
+                {product.text.description && (
+                  <p className="mt-2 line-clamp-3 text-sm text-gray-700">
+                    {product.text.description}
+                  </p>
+                )}
                 <p className="mt-2 text-sm text-gray-600">
-                  Part number: {product.part_number}
+                  {t.partNumber}:{" "}
+                  <span dir="ltr">{product.part_number}</span>
                 </p>
-                <p className="mt-1 text-sm text-gray-600">
-                  Car model: {product.car_model}
-                </p>
-                {product.category && (
+                {product.alt_part_numbers?.length > 0 && (
                   <p className="mt-1 text-sm text-gray-600">
-                    Category: {product.category}
+                    {t.otherPartNumbers}:{" "}
+                    <span dir="ltr">{product.alt_part_numbers.join(", ")}</span>
+                  </p>
+                )}
+                <p className="mt-1 text-sm text-gray-600">
+                  {t.carModel}: {product.text.model}
+                </p>
+                {product.text.category && (
+                  <p className="mt-1 text-sm text-gray-600">
+                    {t.category}: {product.text.category}
                   </p>
                 )}
 
                 <div className="mt-5 flex items-center justify-between border-t pt-4">
                   <span className="text-xl font-bold">
-                    {Number(product.price).toFixed(2)} JOD
+                    {Number(product.price).toFixed(2)} {t.currency}
                   </span>
                   <span
                     className={
@@ -191,8 +254,8 @@ export default function ProductSearch({ products }: { products: Product[] }) {
                     }
                   >
                     {product.stock_quantity > 0
-                      ? `In stock: ${product.stock_quantity}`
-                      : "Out of stock"}
+                      ? t.inStock(product.stock_quantity)
+                      : t.outOfStock}
                   </span>
                 </div>
               </div>
