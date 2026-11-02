@@ -17,7 +17,9 @@ The project is being developed by the owner and should remain easy to maintain.
 
 ## Project Structure
 - src/app/page.tsx: main storefront page (Arabic by default, with an English switch)
-- src/app/admin/: admin area (English): login, products, add/edit product, staff
+- src/app/products/[id]/: product page opened from a product card
+- src/app/admin/: admin area (English): login, products, add/edit product, catalog, staff
+- src/lib/catalog.ts: brands, car models and categories (admin-managed lists)
 - src/proxy.ts: keeps the session fresh and protects /admin
 - src/components/: storefront components; src/components/admin/: admin components
 - src/lib/: Supabase clients, admin checks, product validation, photos, i18n text
@@ -46,10 +48,12 @@ The Supabase public.products table is intended to contain:
 - is_active
 - created_at
 - alt_part_numbers (text[]: other numbers the part is sold under)
-- name_ar, category_ar, description_ar (optional Arabic text for the storefront)
+- name_ar, description_ar (optional Arabic text for the storefront; category_ar is unused)
 
 Other database objects (see supabase/migrations/):
 - public.admins (user_id, role 'owner' | 'staff') and the public.is_admin() function
+- public.brands, public.car_models, public.categories (name, name_ar): catalog lists;
+  products store the English names as text
 - Storage bucket product-images (public read; admins upload)
 - Admin names are stored in the Supabase Auth user's metadata (full_name)
 
@@ -82,12 +86,23 @@ Do not assume this schema or its policies are different from the actual database
 10. Prefer clear, maintainable TypeScript and validate user input.
 
 ## Current Status
-Done: storefront with search and filters (Arabic/English), WhatsApp contact for
-missing parts, admin area with owner/staff roles, staff accounts (create, edit,
-delete), product add/edit/delete with photos (camera or file), other part
-numbers, and Arabic product text.
+Done: storefront with search and filters (Arabic/English), product pages with
+"Order on WhatsApp", WhatsApp contact for missing parts, admin area with
+owner/staff roles, staff accounts (create, edit, delete), product
+add/edit/delete with photos (camera or file, shrunk before upload), other part
+numbers, Arabic product text, catalog lists (brands, car models, categories),
+and phone-friendly admin pages.
+
+Deployed on Vercel from the main branch: https://motor-mart-one.vercel.app
+Workflow: work on a branch (currently feature/admin), push, the owner opens and
+merges a PR into main on GitHub, and Vercel deploys automatically. The gh CLI
+is not installed on the owner's PC. Database changes are SQL files the owner
+runs in the Supabase SQL Editor; add each one to supabase/migrations/.
 
 Tried and reverted: a multi-shop marketplace (see the shop migrations and the
 remove_shops migration). Do not bring it back without the owner asking.
 
-Not done yet: deployment, customer accounts, cart/orders.
+Not done yet: customer accounts, cart/orders, a custom domain, an Arabic web
+font, a "forgot password" page, enabling the Supabase variables for Vercel
+Preview deployments. products.category_ar is no longer used (category Arabic
+names come from the catalog) but is still in the database.
