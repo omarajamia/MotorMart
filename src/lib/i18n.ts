@@ -60,6 +60,17 @@ const en = {
   currency: "JOD",
   inStock: (count: number) => `In stock: ${count}`,
   outOfStock: "Out of stock",
+
+  // Product page
+  backToProducts: "← Back to products",
+  years: "Years",
+  yearsRange: (from: number | null, to: number | null) =>
+    from && to ? `${from} – ${to}` : from ? `From ${from}` : `Up to ${to}`,
+  description: "Description",
+  orderOnWhatsapp: "Order on WhatsApp",
+  whatsappOrder: (name: string, part: string) =>
+    `Hi ${SITE_NAME.en}, I'd like to order: ${name} (part number ${part}). Is it available?`,
+  productNotFound: "This product doesn't exist or is no longer available.",
 };
 
 export type Messages = typeof en;
@@ -101,6 +112,16 @@ const ar: Messages = {
   currency: "د.أ",
   inStock: (count) => `متوفر: ${count}`,
   outOfStock: "غير متوفر",
+
+  backToProducts: "→ العودة إلى المنتجات",
+  years: "سنوات الصنع",
+  yearsRange: (from, to) =>
+    from && to ? `${from} – ${to}` : from ? `من ${from}` : `حتى ${to}`,
+  description: "الوصف",
+  orderOnWhatsapp: "اطلب عبر واتساب",
+  whatsappOrder: (name, part) =>
+    `مرحباً ${SITE_NAME.ar}، أريد طلب هذه القطعة: ${name} (رقم القطعة ${part}). هل هي متوفرة؟`,
+  productNotFound: "هذا المنتج غير موجود أو لم يعد متوفراً.",
 };
 
 export const messages: Record<Lang, Messages> = { en, ar };
