@@ -11,15 +11,21 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <header className="bg-slate-950 text-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <p className="text-xl font-bold">
-            <span className="text-orange-400">{SITE_NAME.en}</span>{" "}
-            <span className="text-base font-medium text-gray-300">Admin</span>
+        {/* On phones the name sits above the links; on wider screens they
+            share one row. */}
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 md:flex-row md:items-center md:justify-between md:py-4">
+          <p className="font-bold">
+            <span className="text-lg text-orange-400 sm:text-xl">
+              {SITE_NAME.en}
+            </span>{" "}
+            <span className="text-sm font-medium text-gray-300">Admin</span>
           </p>
           <AdminNav />
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-6 py-10">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
+        {children}
+      </main>
     </div>
   );
 }
