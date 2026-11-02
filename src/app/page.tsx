@@ -1,11 +1,6 @@
 import { supabase } from "@/lib/supabase";
-import LanguageSwitch from "@/components/LanguageSwitch";
 import ProductSearch from "@/components/ProductSearch";
-import {
-  CONTACT_PHONE_DISPLAY,
-  partRequestMessage,
-  whatsappLink,
-} from "@/lib/contact";
+import SiteHeader from "@/components/SiteHeader";
 import { loadCatalog } from "@/lib/catalog";
 import { messages } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
@@ -38,36 +33,7 @@ export default async function Home() {
       lang={lang}
       className="min-h-screen bg-gray-50 text-gray-900"
     >
-      <div className="bg-green-700 text-white">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-4 gap-y-2 px-6 py-2 text-sm">
-          <p>
-            {t.contactBar}{" "}
-            <span dir="ltr" className="font-semibold">
-              {CONTACT_PHONE_DISPLAY}
-            </span>
-          </p>
-          <a
-            href={whatsappLink(partRequestMessage(lang))}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full bg-white px-4 py-1 font-medium text-green-800 hover:bg-green-50"
-          >
-            {t.askOnWhatsapp}
-          </a>
-        </div>
-      </div>
-
-      <header className="bg-slate-950 text-white">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-5">
-          <div>
-            <h1 className="text-2xl font-bold text-orange-400">
-              {t.siteName}
-            </h1>
-            <p className="mt-1 text-sm text-gray-300">{t.tagline}</p>
-          </div>
-          <LanguageSwitch lang={lang} />
-        </div>
-      </header>
+      <SiteHeader lang={lang} />
 
       <section className="mx-auto max-w-7xl px-6 py-12">
         <h2 className="text-3xl font-bold sm:text-4xl">{t.heroTitle}</h2>

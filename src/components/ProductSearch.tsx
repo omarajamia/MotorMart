@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { partRequestMessage, whatsappLink } from "@/lib/contact";
 import type { Catalog } from "@/lib/catalog";
@@ -193,10 +194,12 @@ export default function ProductSearch({
       ) : (
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredProducts.map((product) => (
-            <article
+            <Link
               key={product.id}
-              className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+              href={`/products/${product.id}`}
+              className="block rounded-xl transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
             >
+            <article className="h-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
               {product.image_url ? (
                 <div className="relative h-48 w-full">
                   <Image
@@ -260,6 +263,7 @@ export default function ProductSearch({
                 </div>
               </div>
             </article>
+            </Link>
           ))}
         </div>
       )}
