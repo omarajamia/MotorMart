@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import NoAccess from "@/components/admin/NoAccess";
-import ProductRow from "@/components/admin/ProductRow";
+import AdminProductList from "@/components/admin/AdminProductList";
 import { getAdmin } from "@/lib/admin";
 import type { AdminProduct } from "@/lib/types";
 
@@ -63,28 +63,7 @@ async function AdminDashboard() {
           No products yet.
         </p>
       ) : (
-        <div className="mt-8 overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-          {/* On phones each product is a stacked card; from md up, a table. */}
-          <table className="block w-full text-left text-sm md:table">
-            <thead className="hidden border-b bg-gray-50 text-xs uppercase text-gray-500 md:table-header-group">
-              <tr>
-                <th className="px-4 py-3 font-medium">Product</th>
-                <th className="px-4 py-3 font-medium" colSpan={3}>
-                  Price &amp; stock
-                </th>
-                <th className="px-4 py-3 font-medium">Shop visibility</th>
-                <th className="px-4 py-3 font-medium">
-                  <span className="sr-only">Edit</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="block divide-y md:table-row-group">
-              {products.map((product) => (
-                <ProductRow key={product.id} product={product} />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <AdminProductList products={products} />
       )}
     </div>
   );

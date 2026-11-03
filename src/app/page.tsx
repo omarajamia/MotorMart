@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import ProductSearch from "@/components/ProductSearch";
+import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
 import { loadCatalog } from "@/lib/catalog";
 import { messages } from "@/lib/i18n";
@@ -53,9 +54,7 @@ export default async function Home() {
         )}
       </section>
 
-      <footer className="border-t bg-white px-6 py-6 text-center text-sm text-gray-500">
-        {t.footer}
-      </footer>
+      <SiteFooter lang={lang} />
     </main>
   );
 }

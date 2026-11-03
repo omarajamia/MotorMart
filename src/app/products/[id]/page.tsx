@@ -1,6 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
+import ProductGallery from "@/components/ProductGallery";
+import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
 import { loadCatalog } from "@/lib/catalog";
 import { whatsappLink } from "@/lib/contact";
@@ -15,6 +16,7 @@ export const instant = false;
 type ProductWithYears = Product & {
   year_from: number | null;
   year_to: number | null;
+  extra_image_urls: string[];
 };
 
 export default function ProductPage({ params }: PageProps<"/products/[id]">) {
@@ -39,7 +41,7 @@ async function ProductDetails({
       ? supabase
           .from("products")
           .select(
-            "id, name, name_ar, part_number, alt_part_numbers, brand, car_model, year_from, year_to, category, description, description_ar, price, stock_quantity, image_url"
+            "id, name, name_ar, part_number, alt_part_numbers, brand, car_model, year_from, year_to, category, description, description_ar, price, stock_quantity, image_url, extra_image_urls"
           )
           .eq("id", id)
           .eq("is_active", true)
@@ -69,22 +71,13 @@ async function ProductDetails({
           </p>
         ) : (
           <div className="mt-6 grid gap-8 overflow-hidden rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6 md:grid-cols-2">
-            {product.image_url ? (
-              <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
-                <Image
-                  src={product.image_url}
-                  alt={text.name}
-                  fill
-                  sizes="(min-width: 768px) 50vw, 100vw"
-                  className="object-contain"
-                  priority
-                />
-              </div>
-            ) : (
-              <div className="flex aspect-square w-full items-center justify-center rounded-lg bg-gray-100 text-gray-400">
-                {t.noImage}
-              </div>
-            )}
+            <ProductGallery
+              images={[product.image_url, ...(product.extra_image_urls ?? [])].filter(
+                (url): url is string => Boolean(url)
+              )}
+              alt={text.name}
+              noImageText={t.noImage}
+            />
 
             <div>
               <p className="text-sm font-medium text-orange-600">{text.brand}</p>
@@ -147,9 +140,7 @@ async function ProductDetails({
         )}
       </section>
 
-      <footer className="border-t bg-white px-6 py-6 text-center text-sm text-gray-500">
-        {t.footer}
-      </footer>
+      <SiteFooter lang={lang} />
     </main>
   );
 }

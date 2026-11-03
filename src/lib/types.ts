@@ -23,6 +23,7 @@ export type AdminProduct = Product & {
 export type ProductDetails = AdminProduct & {
   year_from: number | null;
   year_to: number | null;
+  extra_image_urls: string[];
 };
 
 // Result of an admin form submission, shown next to the form.

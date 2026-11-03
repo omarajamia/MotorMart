@@ -106,3 +106,19 @@ Not done yet: customer accounts, cart/orders, a custom domain, an Arabic web
 font, a "forgot password" page, enabling the Supabase variables for Vercel
 Preview deployments. products.category_ar is no longer used (category Arabic
 names come from the catalog) but is still in the database.
+
+## Where we stopped (2026-11-03)
+Built on feature/admin but NOT pushed or live yet:
+- Extra product photos (products.extra_image_urls, up to 8) with a gallery on
+  the product page. Needs supabase/migrations/20261103000000_extra_product_photos.sql
+  to be run first; until then product pages fail locally.
+- Search box on the admin Products page.
+- Shop filters show brand/model names in both languages; category filter removed.
+- Floating WhatsApp button instead of the top bar; number moved to the footer.
+
+Next steps:
+1. Owner runs the extra photos SQL, then test (signed in) and push; owner merges.
+2. Proposed, not started: an "order list" (a light cart): "+ Add to order" on
+   products, the floating button shows the count, one WhatsApp message lists
+   all items with quantities and total; kept in the visitor's browser only,
+   no accounts or checkout. The single-item "Order on WhatsApp" stays.

@@ -5,7 +5,13 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { partRequestMessage, whatsappLink } from "@/lib/contact";
 import type { Catalog } from "@/lib/catalog";
-import { catalogName, localize, messages, type Lang } from "@/lib/i18n";
+import {
+  bothNames,
+  catalogName,
+  localize,
+  messages,
+  type Lang,
+} from "@/lib/i18n";
 import type { Product } from "@/lib/types";
 
 export default function ProductSearch({
@@ -23,7 +29,6 @@ export default function ProductSearch({
   // show the names in the chosen language.
   const [brand, setBrand] = useState("All");
   const [model, setModel] = useState("All");
-  const [category, setCategory] = useState("All");
   const [inStockOnly, setInStockOnly] = useState(false);
 
   const shown = useMemo(
@@ -31,7 +36,7 @@ export default function ProductSearch({
     [products, lang, catalog]
   );
 
-  // Only offer brands, models and categories that have products.
+  // Only offer brands and models that have products.
   const brandOptions = useMemo(
     () => catalog.brands.filter((b) => products.some((p) => p.brand === b.name)),
     [catalog, products]
@@ -52,13 +57,6 @@ export default function ProductSearch({
         )
     );
   }, [catalog, products, brand]);
-  const categoryOptions = useMemo(
-    () =>
-      catalog.categories.filter((c) =>
-        products.some((p) => p.category === c.name)
-      ),
-    [catalog, products]
-  );
 
   // What the customer was searching for, sent along in the WhatsApp message.
   const lookingFor = [
@@ -67,12 +65,6 @@ export default function ProductSearch({
       catalogName(catalog.brands.find((b) => b.name === brand), brand, lang),
     model !== "All" &&
       catalogName(modelOptions.find((m) => m.name === model), model, lang),
-    category !== "All" &&
-      catalogName(
-        catalog.categories.find((c) => c.name === category),
-        category,
-        lang
-      ),
   ]
     .filter(Boolean)
     .join(" ");
@@ -84,13 +76,12 @@ export default function ProductSearch({
       (!term || p.text.searchText.includes(term)) &&
       (brand === "All" || p.brand === brand) &&
       (model === "All" || p.car_model === model) &&
-      (category === "All" || p.category === category) &&
       (!inStockOnly || p.stock_quantity > 0)
   );
 
   return (
     <div>
-      <div className="mt-8 grid gap-4 rounded-xl border border-gray-200 bg-white p-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-8 grid gap-4 rounded-xl border border-gray-200 bg-white p-5 sm:grid-cols-2 lg:grid-cols-3">
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -112,7 +103,7 @@ export default function ProductSearch({
           <option value="All">{t.allBrands}</option>
           {brandOptions.map((item) => (
             <option key={item.id} value={item.name}>
-              {catalogName(item, item.name, lang)}
+              {bothNames(item, lang)}
             </option>
           ))}
         </select>
@@ -128,27 +119,13 @@ export default function ProductSearch({
           {[...new Map(modelOptions.map((m) => [m.name, m])).values()].map(
             (item) => (
               <option key={item.id} value={item.name}>
-                {catalogName(item, item.name, lang)}
+                {bothNames(item, lang)}
               </option>
             )
           )}
         </select>
 
-        <select
-          aria-label={t.allCategories}
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="rounded-lg border border-gray-300 px-4 py-3"
-        >
-          <option value="All">{t.allCategories}</option>
-          {categoryOptions.map((item) => (
-            <option key={item.id} value={item.name}>
-              {catalogName(item, item.name, lang)}
-            </option>
-          ))}
-        </select>
-
-        <label className="flex items-center gap-2 text-sm text-gray-700 sm:col-span-2 lg:col-span-4">
+        <label className="flex items-center gap-2 text-sm text-gray-700 sm:col-span-2 lg:col-span-3">
           <input
             type="checkbox"
             checked={inStockOnly}
@@ -158,7 +135,7 @@ export default function ProductSearch({
           {t.inStockOnly}
         </label>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2 lg:col-span-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2 lg:col-span-3">
           <p className="text-sm text-gray-600">
             {t.found(filteredProducts.length)}
           </p>
@@ -168,7 +145,6 @@ export default function ProductSearch({
               setSearch("");
               setBrand("All");
               setModel("All");
-              setCategory("All");
               setInStockOnly(false);
             }}
             className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium hover:bg-slate-200"

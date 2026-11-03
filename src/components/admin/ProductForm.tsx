@@ -4,8 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { createProduct, updateProduct } from "@/app/admin/actions";
+import ExtraPhotos from "@/components/admin/ExtraPhotos";
 import PhotoPicker from "@/components/admin/PhotoPicker";
-import { shrinkPhotosInForm } from "@/lib/compress-image";
+import { shrinkPhoto, shrinkPhotosInForm } from "@/lib/compress-image";
 import { submitKeepingFields } from "@/lib/form-submit";
 import type { Catalog } from "@/lib/catalog";
 import type { ActionState, ProductDetails } from "@/lib/types";
@@ -35,6 +36,8 @@ export default function ProductForm({
   // True while a large photo is being shrunk, before the form is sent.
   const [preparing, setPreparing] = useState(false);
   const busy = pending || preparing;
+  // New "more photos", collected over several picks and sent on save.
+  const [extraFiles, setExtraFiles] = useState<File[]>([]);
 
   return (
     <form
@@ -42,6 +45,9 @@ export default function ProductForm({
         setPreparing(true);
         try {
           await shrinkPhotosInForm(formData, ["image_camera", "image"]);
+          for (const file of extraFiles) {
+            formData.append("extra_images", await shrinkPhoto(file));
+          }
         } finally {
           setPreparing(false);
         }
@@ -244,7 +250,7 @@ export default function ProductForm({
         </label>
 
         <div className="sm:col-span-2">
-          <span className="text-sm font-medium text-gray-700">Photo</span>
+          <span className="text-sm font-medium text-gray-700">Main photo</span>
           {product?.image_url && (
             <div className="mt-2 flex items-center gap-4">
               <div className="relative h-24 w-32 overflow-hidden rounded-lg border border-gray-200">
@@ -273,6 +279,12 @@ export default function ProductForm({
             {product?.image_url && " A new photo replaces the current one."}
           </p>
         </div>
+
+        <ExtraPhotos
+          existing={product?.extra_image_urls ?? []}
+          files={extraFiles}
+          onFilesChange={setExtraFiles}
+        />
 
         <label className="block sm:col-span-2">
           <span className="text-sm font-medium text-gray-700">
