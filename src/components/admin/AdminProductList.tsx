@@ -23,6 +23,7 @@ export default function AdminProductList({
           p.brand,
           p.car_model,
           p.category,
+          p.store?.name,
         ].some((value) => (value ?? "").toLowerCase().includes(term))
       )
     : products;
@@ -35,7 +36,7 @@ export default function AdminProductList({
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           aria-label="Search products"
-          placeholder="Search by name, part number, brand or model…"
+          placeholder="Search by name, part number, brand, model or store…"
           className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 outline-none focus:border-orange-500 sm:max-w-md"
         />
         {term && (

@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import NoAccess from "@/components/admin/NoAccess";
 import ProductForm from "@/components/admin/ProductForm";
 import { getAdmin } from "@/lib/admin";
-import { loadCatalog } from "@/lib/catalog";
+import { loadCatalog, loadStores } from "@/lib/catalog";
 
 export const instant = false;
 
@@ -25,5 +25,9 @@ async function NewProduct() {
     return <NoAccess email={user.email} />;
   }
 
-  return <ProductForm catalog={await loadCatalog(supabase)} />;
+  const [catalog, stores] = await Promise.all([
+    loadCatalog(supabase),
+    loadStores(supabase),
+  ]);
+  return <ProductForm catalog={catalog} stores={stores} />;
 }

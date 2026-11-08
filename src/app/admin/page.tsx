@@ -25,15 +25,16 @@ async function AdminDashboard() {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, name, name_ar, part_number, alt_part_numbers, brand, car_model, category, description, description_ar, price, stock_quantity, image_url, is_active"
+      "id, store_id, store:stores(name), name, name_ar, part_number, alt_part_numbers, brand, car_model, category, description, description_ar, price, stock_quantity, image_url, is_active"
     )
-    .order("name");
+    .order("name")
+    .overrideTypes<AdminProduct[], { merge: false }>();
 
   if (error) {
     console.error("Failed to load products for admin:", error);
   }
 
-  const products = (data ?? []) as AdminProduct[];
+  const products = data ?? [];
 
   return (
     <div>

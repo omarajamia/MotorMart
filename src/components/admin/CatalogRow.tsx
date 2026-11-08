@@ -5,6 +5,7 @@ import {
   deleteCatalogItem,
   updateCatalogItem,
 } from "@/app/admin/catalog/actions";
+import { deleteStore, updateStore } from "@/app/admin/catalog/store-actions";
 import { submitKeepingFields } from "@/lib/form-submit";
 import type { ActionState } from "@/lib/types";
 
@@ -13,7 +14,8 @@ const initialState: ActionState = {};
 const inputClass =
   "mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-orange-500";
 
-// One brand, car model or category, with inline Edit and Delete.
+// One brand, car model, category or store, with inline Edit and Delete.
+// Stores have a "Phone / location" note instead of an Arabic name.
 export default function CatalogRow({
   kind,
   id,
@@ -21,19 +23,20 @@ export default function CatalogRow({
   nameAr,
   productCount,
 }: {
-  kind: "brand" | "model" | "category";
+  kind: "brand" | "model" | "category" | "store";
   id: string;
   name: string;
   nameAr: string | null;
   productCount: number;
 }) {
+  const isStore = kind === "store";
   const [editing, setEditing] = useState(false);
   const [saveState, saveAction, saving] = useActionState(
-    updateCatalogItem,
+    kind === "store" ? updateStore : updateCatalogItem,
     initialState
   );
   const [deleteState, deleteAction, deleting] = useActionState(
-    deleteCatalogItem,
+    kind === "store" ? deleteStore : deleteCatalogItem,
     initialState
   );
 
@@ -43,7 +46,7 @@ export default function CatalogRow({
         <span>
           <span className="font-medium text-gray-900">{name}</span>
           {nameAr && (
-            <span className="ml-2 text-gray-600" dir="rtl">
+            <span className="ml-2 text-gray-600" dir={isStore ? "auto" : "rtl"}>
               {nameAr}
             </span>
           )}
@@ -93,7 +96,9 @@ export default function CatalogRow({
           <input type="hidden" name="kind" value={kind} />
           <input type="hidden" name="id" value={id} />
           <label className="block">
-            <span className="font-medium text-gray-700">Name (English)</span>
+            <span className="font-medium text-gray-700">
+              {isStore ? "Name" : "Name (English)"}
+            </span>
             <input
               name="name"
               required
@@ -102,10 +107,12 @@ export default function CatalogRow({
             />
           </label>
           <label className="block">
-            <span className="font-medium text-gray-700">Name (Arabic)</span>
+            <span className="font-medium text-gray-700">
+              {isStore ? "Phone / location" : "Name (Arabic)"}
+            </span>
             <input
-              name="name_ar"
-              dir="rtl"
+              name={isStore ? "details" : "name_ar"}
+              dir={isStore ? "auto" : "rtl"}
               defaultValue={nameAr ?? ""}
               className={inputClass}
             />
@@ -118,7 +125,7 @@ export default function CatalogRow({
             >
               {saving ? "Saving…" : "Save changes"}
             </button>
-            {productCount > 0 && (
+            {productCount > 0 && !isStore && (
               <span className="text-xs text-gray-500">
                 Renaming also updates its {productCount} product(s).
               </span>

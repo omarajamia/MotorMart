@@ -3,14 +3,14 @@ import CatalogAddForm from "@/components/admin/CatalogAddForm";
 import CatalogRow from "@/components/admin/CatalogRow";
 import NoAccess from "@/components/admin/NoAccess";
 import { getAdmin } from "@/lib/admin";
-import { loadCatalog } from "@/lib/catalog";
+import { loadCatalog, loadStores } from "@/lib/catalog";
 
 export const instant = false;
 
 export default function CatalogPage() {
   return (
     <div className="mx-auto max-w-4xl">
-      <h1 className="text-2xl font-bold">Brands, car models & categories</h1>
+      <h1 className="text-2xl font-bold">Stores, brands, car models & categories</h1>
       <p className="mt-1 text-sm text-gray-600">
         These lists fill the dropdowns on the product form and the filters in
         the shop. The Arabic names are shown to visitors browsing in Arabic.
@@ -30,17 +30,38 @@ async function CatalogLists() {
     return <NoAccess email={user.email} />;
   }
 
-  const [catalog, { data: products }] = await Promise.all([
+  const [catalog, stores, { data: products }] = await Promise.all([
     loadCatalog(supabase),
-    supabase.from("products").select("brand, car_model, category"),
+    loadStores(supabase),
+    supabase.from("products").select("brand, car_model, category, store_id"),
   ]);
 
   // How many products use each name, shown next to it.
-  const count = (match: (p: { brand: string; car_model: string; category: string | null }) => boolean) =>
+  const count = (
+    match: (p: {
+      brand: string;
+      car_model: string;
+      category: string | null;
+      store_id: string | null;
+    }) => boolean
+  ) =>
     (products ?? []).filter(match).length;
 
   return (
     <div className="space-y-8">
+      <Section title="Stores (admin only)" form={<CatalogAddForm kind="store" />}>
+        {stores.map((store) => (
+          <CatalogRow
+            key={store.id}
+            kind="store"
+            id={store.id}
+            name={store.name}
+            nameAr={store.details}
+            productCount={count((p) => p.store_id === store.id)}
+          />
+        ))}
+      </Section>
+
       <Section title="Brands" form={<CatalogAddForm kind="brand" />}>
         {catalog.brands.map((brand) => (
           <CatalogRow

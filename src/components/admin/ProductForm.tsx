@@ -8,7 +8,7 @@ import ExtraPhotos from "@/components/admin/ExtraPhotos";
 import PhotoPicker from "@/components/admin/PhotoPicker";
 import { shrinkPhoto, shrinkPhotosInForm } from "@/lib/compress-image";
 import { submitKeepingFields } from "@/lib/form-submit";
-import type { Catalog } from "@/lib/catalog";
+import type { Catalog, Store } from "@/lib/catalog";
 import type { ActionState, ProductDetails } from "@/lib/types";
 
 const initialState: ActionState = {};
@@ -19,9 +19,12 @@ const inputClass =
 export default function ProductForm({
   product,
   catalog,
+  stores,
 }: {
   product?: ProductDetails;
   catalog: Catalog;
+  // Admin-only list of where products come from.
+  stores: Store[];
 }) {
   // The car model list depends on the chosen brand.
   const [brand, setBrand] = useState(product?.brand ?? "");
@@ -57,6 +60,33 @@ export default function ProductForm({
       {product && <input type="hidden" name="id" value={product.id} />}
 
       <div className="grid gap-5 sm:grid-cols-2">
+        <label className="block sm:col-span-2">
+          <span className="text-sm font-medium text-gray-700">
+            Store *{" "}
+            <span className="font-normal text-gray-500">
+              (admins only, not shown in the shop)
+            </span>
+          </span>
+          <select
+            name="store_id"
+            required
+            defaultValue={product?.store_id ?? ""}
+            className={inputClass}
+          >
+            <option value="" disabled>
+              {stores.length
+                ? "Choose the store"
+                : "No stores yet – add one on the Catalog page"}
+            </option>
+            {stores.map((store) => (
+              <option key={store.id} value={store.id}>
+                {store.name}
+                {store.details ? ` – ${store.details}` : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <label className="block sm:col-span-2">
           <span className="text-sm font-medium text-gray-700">Name *</span>
           <input

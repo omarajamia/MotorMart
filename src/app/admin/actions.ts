@@ -123,11 +123,25 @@ export async function setProductActive(
 
 type AdminSupabase = Awaited<ReturnType<typeof getAdmin>>["supabase"];
 
-// The brand, car model and category must be ones from the Catalog lists.
+// The store, brand, car model and category must be ones from the Catalog.
 async function checkCatalog(
   supabase: AdminSupabase,
-  product: { brand: string; car_model: string; category: string | null }
+  product: {
+    store_id: string;
+    brand: string;
+    car_model: string;
+    category: string | null;
+  }
 ) {
+  const { data: store } = await supabase
+    .from("stores")
+    .select("id")
+    .eq("id", product.store_id)
+    .maybeSingle();
+  if (!store) {
+    return "Choose a store from the list.";
+  }
+
   const { data: brand } = await supabase
     .from("brands")
     .select("id")

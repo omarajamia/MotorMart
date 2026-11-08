@@ -17,6 +17,9 @@ export type Product = {
 };
 
 export type AdminProduct = Product & {
+  store_id: string | null;
+  // Only loaded on the admin product list.
+  store?: { name: string } | null;
   is_active: boolean;
 };
 

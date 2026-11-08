@@ -37,6 +37,15 @@ export default function ProductRow({ product }: { product: AdminProduct }) {
           · {product.brand} {product.car_model}
           {product.category ? ` · ${product.category}` : ""}
         </p>
+        <p
+          className={
+            product.store
+              ? "text-xs font-medium text-slate-700"
+              : "text-xs font-medium text-amber-700"
+          }
+        >
+          {product.store ? `Store: ${product.store.name}` : "No store – edit to set one"}
+        </p>
       </td>
 
       <td className="block px-4 py-2 md:table-cell md:py-3" colSpan={3}>
