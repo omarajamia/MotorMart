@@ -8,6 +8,7 @@ export type ProductInput = {
   part_number: string;
   alt_part_numbers: string[];
   brand: string;
+  store_id: string;
   car_model: string;
   year_from: number | null;
   year_to: number | null;
@@ -69,6 +70,7 @@ export function parseProductForm(
     partNumber
   );
   const brand = text(formData, "brand");
+  const storeId = text(formData, "store_id");
   const carModel = text(formData, "car_model");
   const category = text(formData, "category");
   const description = text(formData, "description");
@@ -96,6 +98,9 @@ export function parseProductForm(
   }
   if (!brand || brand.length > 60) {
     return { error: "Choose a brand." };
+  }
+  if (!UUID_PATTERN.test(storeId)) {
+    return { error: "Choose the store this product comes from." };
   }
   if (!carModel || carModel.length > 100) {
     return { error: "Enter the car model (up to 100 characters)." };
@@ -129,6 +134,7 @@ export function parseProductForm(
       part_number: partNumber,
       alt_part_numbers: otherPartNumbers,
       brand,
+      store_id: storeId,
       car_model: carModel,
       year_from: yearFrom,
       year_to: yearTo,

@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { createCatalogItem } from "@/app/admin/catalog/actions";
+import { createStore } from "@/app/admin/catalog/store-actions";
 import type { Brand } from "@/lib/catalog";
 import { submitKeepingFields } from "@/lib/form-submit";
 import type { ActionState } from "@/lib/types";
@@ -15,21 +16,24 @@ const PLACEHOLDERS = {
   brand: ["e.g. Toyota", "مثال: تويوتا"],
   model: ["e.g. Corolla", "مثال: كورولا"],
   category: ["e.g. Brakes", "مثال: فرامل"],
+  store: ["e.g. Al-Amal Spare Parts", "e.g. 0791234567, Amman"],
 };
 
-// "Add" form for a brand, car model (needs a brand) or category.
+// "Add" form for a brand, car model (needs a brand), category or store.
+// Stores have a "Phone / location" note instead of an Arabic name.
 export default function CatalogAddForm({
   kind,
   brands = [],
 }: {
-  kind: "brand" | "model" | "category";
+  kind: "brand" | "model" | "category" | "store";
   brands?: Brand[];
 }) {
   const [state, formAction, pending] = useActionState(
-    createCatalogItem,
+    kind === "store" ? createStore : createCatalogItem,
     initialState
   );
   const [placeholder, placeholderAr] = PLACEHOLDERS[kind];
+  const isStore = kind === "store";
 
   return (
     <form
@@ -55,7 +59,9 @@ export default function CatalogAddForm({
         </label>
       )}
       <label className="block">
-        <span className="font-medium text-gray-700">Name (English)</span>
+        <span className="font-medium text-gray-700">
+          {isStore ? "Name" : "Name (English)"}
+        </span>
         <input
           name="name"
           required
@@ -64,10 +70,12 @@ export default function CatalogAddForm({
         />
       </label>
       <label className="block">
-        <span className="font-medium text-gray-700">Name (Arabic)</span>
+        <span className="font-medium text-gray-700">
+          {isStore ? "Phone / location" : "Name (Arabic)"}
+        </span>
         <input
-          name="name_ar"
-          dir="rtl"
+          name={isStore ? "details" : "name_ar"}
+          dir={isStore ? "auto" : "rtl"}
           placeholder={placeholderAr}
           className={inputClass}
         />

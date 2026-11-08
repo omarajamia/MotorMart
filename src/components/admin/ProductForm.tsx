@@ -4,10 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { createProduct, updateProduct } from "@/app/admin/actions";
+import ExtraPhotos from "@/components/admin/ExtraPhotos";
 import PhotoPicker from "@/components/admin/PhotoPicker";
-import { shrinkPhotosInForm } from "@/lib/compress-image";
+import { shrinkPhoto, shrinkPhotosInForm } from "@/lib/compress-image";
 import { submitKeepingFields } from "@/lib/form-submit";
-import type { Catalog } from "@/lib/catalog";
+import type { Catalog, Store } from "@/lib/catalog";
 import type { ActionState, ProductDetails } from "@/lib/types";
 
 const initialState: ActionState = {};
@@ -18,9 +19,12 @@ const inputClass =
 export default function ProductForm({
   product,
   catalog,
+  stores,
 }: {
   product?: ProductDetails;
   catalog: Catalog;
+  // Admin-only list of where products come from.
+  stores: Store[];
 }) {
   // The car model list depends on the chosen brand.
   const [brand, setBrand] = useState(product?.brand ?? "");
@@ -35,6 +39,8 @@ export default function ProductForm({
   // True while a large photo is being shrunk, before the form is sent.
   const [preparing, setPreparing] = useState(false);
   const busy = pending || preparing;
+  // New "more photos", collected over several picks and sent on save.
+  const [extraFiles, setExtraFiles] = useState<File[]>([]);
 
   return (
     <form
@@ -42,6 +48,9 @@ export default function ProductForm({
         setPreparing(true);
         try {
           await shrinkPhotosInForm(formData, ["image_camera", "image"]);
+          for (const file of extraFiles) {
+            formData.append("extra_images", await shrinkPhoto(file));
+          }
         } finally {
           setPreparing(false);
         }
@@ -51,6 +60,33 @@ export default function ProductForm({
       {product && <input type="hidden" name="id" value={product.id} />}
 
       <div className="grid gap-5 sm:grid-cols-2">
+        <label className="block sm:col-span-2">
+          <span className="text-sm font-medium text-gray-700">
+            Store *{" "}
+            <span className="font-normal text-gray-500">
+              (admins only, not shown in the shop)
+            </span>
+          </span>
+          <select
+            name="store_id"
+            required
+            defaultValue={product?.store_id ?? ""}
+            className={inputClass}
+          >
+            <option value="" disabled>
+              {stores.length
+                ? "Choose the store"
+                : "No stores yet – add one on the Catalog page"}
+            </option>
+            {stores.map((store) => (
+              <option key={store.id} value={store.id}>
+                {store.name}
+                {store.details ? ` – ${store.details}` : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <label className="block sm:col-span-2">
           <span className="text-sm font-medium text-gray-700">Name *</span>
           <input
@@ -244,7 +280,7 @@ export default function ProductForm({
         </label>
 
         <div className="sm:col-span-2">
-          <span className="text-sm font-medium text-gray-700">Photo</span>
+          <span className="text-sm font-medium text-gray-700">Main photo</span>
           {product?.image_url && (
             <div className="mt-2 flex items-center gap-4">
               <div className="relative h-24 w-32 overflow-hidden rounded-lg border border-gray-200">
@@ -273,6 +309,12 @@ export default function ProductForm({
             {product?.image_url && " A new photo replaces the current one."}
           </p>
         </div>
+
+        <ExtraPhotos
+          existing={product?.extra_image_urls ?? []}
+          files={extraFiles}
+          onFilesChange={setExtraFiles}
+        />
 
         <label className="block sm:col-span-2">
           <span className="text-sm font-medium text-gray-700">

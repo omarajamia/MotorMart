@@ -35,3 +35,15 @@ export async function loadCatalog(supabase: SupabaseClient): Promise<Catalog> {
     categories: (categories.data ?? []) as Category[],
   };
 }
+
+// Where a product comes from. Admin only: visitors can't read stores.
+export type Store = { id: string; name: string; details: string | null };
+
+export async function loadStores(supabase: SupabaseClient): Promise<Store[]> {
+  const { data, error } = await supabase
+    .from("stores")
+    .select("id, name, details")
+    .order("name");
+  if (error) console.error("Failed to load stores:", error);
+  return (data ?? []) as Store[];
+}

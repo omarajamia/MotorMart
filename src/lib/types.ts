@@ -17,12 +17,16 @@ export type Product = {
 };
 
 export type AdminProduct = Product & {
+  store_id: string | null;
+  // Only loaded on the admin product list.
+  store?: { name: string } | null;
   is_active: boolean;
 };
 
 export type ProductDetails = AdminProduct & {
   year_from: number | null;
   year_to: number | null;
+  extra_image_urls: string[];
 };
 
 // Result of an admin form submission, shown next to the form.

@@ -63,3 +63,39 @@ export async function removeProductImage(
     console.error("Failed to delete product image:", error);
   }
 }
+
+export const MAX_EXTRA_IMAGES = 8;
+
+// The extra photos added in a form (camera or files), skipping empty inputs.
+export function getExtraImageFiles(formData: FormData) {
+  return ["extra_images_camera", "extra_images"]
+    .flatMap((field) => formData.getAll(field))
+    .filter((file): file is File => file instanceof File && file.size > 0);
+}
+
+// Uploads several photos. Returns their URLs, or null (with any that did
+// upload removed again) if one of them fails.
+export async function uploadProductImages(
+  supabase: SupabaseClient,
+  files: File[]
+) {
+  const urls: string[] = [];
+  for (const file of files) {
+    const url = await uploadProductImage(supabase, file);
+    if (!url) {
+      await removeProductImages(supabase, urls);
+      return null;
+    }
+    urls.push(url);
+  }
+  return urls;
+}
+
+export async function removeProductImages(
+  supabase: SupabaseClient,
+  urls: (string | null)[]
+) {
+  for (const url of urls) {
+    await removeProductImage(supabase, url);
+  }
+}

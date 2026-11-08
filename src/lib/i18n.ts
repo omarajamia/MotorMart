@@ -43,7 +43,6 @@ const en = {
   searchPlaceholder: "Search name or part number...",
   allBrands: "All brands",
   allModels: "All models",
-  allCategories: "All categories",
   inStockOnly: "Show in-stock products only",
   found: (count: number) => `${count} product(s) found`,
   clearFilters: "Clear filters",
@@ -96,7 +95,6 @@ const ar: Messages = {
   searchPlaceholder: "ابحث بالاسم أو رقم القطعة...",
   allBrands: "كل الشركات",
   allModels: "كل الموديلات",
-  allCategories: "كل التصنيفات",
   inStockOnly: "إظهار المنتجات المتوفرة فقط",
   found: (count) => `${count} منتج`,
   clearFilters: "مسح الفلاتر",
@@ -135,6 +133,18 @@ export function catalogName(
 ) {
   if (!item) return fallback;
   return lang === "ar" ? item.name_ar || item.name : item.name;
+}
+
+// A brand or car model name in both languages, the chosen one first, e.g.
+// "كيا (Kia)" or "Kia (كيا)". Just the name when there is no Arabic one.
+export function bothNames(
+  item: { name: string; name_ar: string | null },
+  lang: Lang
+) {
+  if (!item.name_ar) return item.name;
+  return lang === "ar"
+    ? `${item.name_ar} (${item.name})`
+    : `${item.name} (${item.name_ar})`;
 }
 
 // A product's text in the chosen language, with the brand, car model and

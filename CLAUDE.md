@@ -54,6 +54,9 @@ Other database objects (see supabase/migrations/):
 - public.admins (user_id, role 'owner' | 'staff') and the public.is_admin() function
 - public.brands, public.car_models, public.categories (name, name_ar): catalog lists;
   products store the English names as text
+- public.stores (name, details) and products.store_id: admin-only, never
+  shown or readable in the shop
+- products.extra_image_urls (text[], up to 8 extra photos)
 - Storage bucket product-images (public read; admins upload)
 - Admin names are stored in the Supabase Auth user's metadata (full_name)
 
@@ -91,7 +94,10 @@ Done: storefront with search and filters (Arabic/English), product pages with
 owner/staff roles, staff accounts (create, edit, delete), product
 add/edit/delete with photos (camera or file, shrunk before upload), other part
 numbers, Arabic product text, catalog lists (brands, car models, categories),
-and phone-friendly admin pages.
+phone-friendly admin pages, up to 8 extra photos per product with a gallery,
+a search box on the admin product list, bilingual brand/model filters (no
+category filter in the shop), a floating WhatsApp button, and admin-only
+stores (where each product comes from; required on the product form).
 
 Deployed on Vercel from the main branch: https://motor-mart-one.vercel.app
 Workflow: work on a branch (currently feature/admin), push, the owner opens and
@@ -106,3 +112,10 @@ Not done yet: customer accounts, cart/orders, a custom domain, an Arabic web
 font, a "forgot password" page, enabling the Supabase variables for Vercel
 Preview deployments. products.category_ar is no longer used (category Arabic
 names come from the catalog) but is still in the database.
+
+## Next step (proposed, not started)
+An "order list" (a light cart): "+ Add to order" on products, the floating
+WhatsApp button shows the count, one WhatsApp message lists all items with
+quantities and total; kept in the visitor's browser only, no accounts or
+checkout. The single-item "Order on WhatsApp" stays. Ask the owner before
+building it.
