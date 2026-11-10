@@ -96,6 +96,20 @@ export default function ProductRow({ product }: { product: AdminProduct }) {
             </span>
           )}
         </form>
+        {product.cost && (
+          <p className="mt-1 text-xs text-gray-600">
+            Cost {Number(product.cost.cost_price).toFixed(2)} JOD · Profit{" "}
+            <span
+              className={
+                product.price - product.cost.cost_price < 0
+                  ? "font-medium text-red-600"
+                  : "font-medium text-green-700"
+              }
+            >
+              {(product.price - product.cost.cost_price).toFixed(2)} JOD
+            </span>
+          </p>
+        )}
       </td>
 
       <td className="block px-4 py-2 md:table-cell md:py-3">

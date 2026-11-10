@@ -16,6 +16,7 @@ const PLACEHOLDERS = {
   brand: ["e.g. Toyota", "مثال: تويوتا"],
   model: ["e.g. Corolla", "مثال: كورولا"],
   category: ["e.g. Brakes", "مثال: فرامل"],
+  origin: ["e.g. Korean OEM", "مثال: كوري أصلي"],
   store: ["e.g. Al-Amal Spare Parts", "e.g. 0791234567, Amman"],
 };
 
@@ -25,7 +26,7 @@ export default function CatalogAddForm({
   kind,
   brands = [],
 }: {
-  kind: "brand" | "model" | "category" | "store";
+  kind: "brand" | "model" | "category" | "origin" | "store";
   brands?: Brand[];
 }) {
   const [state, formAction, pending] = useActionState(

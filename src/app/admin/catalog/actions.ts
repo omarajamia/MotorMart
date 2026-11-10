@@ -1,6 +1,6 @@
 "use server";
 
-// Add, rename and delete brands, car models and categories. Products store
+// Add, rename and delete brands, car models, categories and origins. Products store
 // these names as text, so a rename also updates every product that uses the
 // old name, and a delete is refused while products still use it.
 
@@ -9,23 +9,40 @@ import { getAdmin } from "@/lib/admin";
 import { UUID_PATTERN } from "@/lib/products";
 import type { ActionState } from "@/lib/types";
 
-type Kind = "brand" | "model" | "category";
+type Kind = "brand" | "model" | "category" | "origin";
 
 const TABLES: Record<Kind, string> = {
   brand: "brands",
   model: "car_models",
   category: "categories",
+  origin: "origins",
 };
-const MAX_LENGTH: Record<Kind, number> = { brand: 60, model: 100, category: 100 };
+const MAX_LENGTH: Record<Kind, number> = {
+  brand: 60,
+  model: 100,
+  category: 100,
+  origin: 60,
+};
+// The products column that stores each list's English name.
+const PRODUCT_COLUMN: Record<Kind, string> = {
+  brand: "brand",
+  model: "car_model",
+  category: "category",
+  origin: "origin",
+};
 const LABEL: Record<Kind, string> = {
   brand: "brand",
   model: "car model",
   category: "category",
+  origin: "origin",
 };
 
 function readKind(formData: FormData): Kind | null {
   const kind = String(formData.get("kind") ?? "");
-  return kind === "brand" || kind === "model" || kind === "category"
+  return kind === "brand" ||
+    kind === "model" ||
+    kind === "category" ||
+    kind === "origin"
     ? kind
     : null;
 }
@@ -124,19 +141,13 @@ export async function updateCatalogItem(
 
   // Keep the products that use the old name in step.
   if (names.name !== current.name) {
-    let products = supabase.from("products").update(
-      kind === "brand"
-        ? { brand: names.name }
-        : kind === "model"
-          ? { car_model: names.name }
-          : { category: names.name }
-    );
-    if (kind === "brand") products = products.eq("brand", current.name);
-    if (kind === "category") products = products.eq("category", current.name);
+    let products = supabase
+      .from("products")
+      .update({ [PRODUCT_COLUMN[kind]]: names.name })
+      .eq(PRODUCT_COLUMN[kind], current.name);
+    // A model name is only unique within its brand.
     if (kind === "model") {
-      products = products
-        .eq("car_model", current.name)
-        .eq("brand", current.brands?.name ?? "");
+      products = products.eq("brand", current.brands?.name ?? "");
     }
 
     const { error: productsError } = await products;
@@ -176,13 +187,10 @@ export async function deleteCatalogItem(
   // Refuse while products (or, for a brand, car models) still use it.
   let usage = supabase
     .from("products")
-    .select("id", { count: "exact", head: true });
-  if (kind === "brand") usage = usage.eq("brand", current.name);
-  if (kind === "category") usage = usage.eq("category", current.name);
+    .select("id", { count: "exact", head: true })
+    .eq(PRODUCT_COLUMN[kind], current.name);
   if (kind === "model") {
-    usage = usage
-      .eq("car_model", current.name)
-      .eq("brand", current.brands?.name ?? "");
+    usage = usage.eq("brand", current.brands?.name ?? "");
   }
   const { count } = await usage;
   if (count) {

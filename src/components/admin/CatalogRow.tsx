@@ -23,7 +23,7 @@ export default function CatalogRow({
   nameAr,
   productCount,
 }: {
-  kind: "brand" | "model" | "category" | "store";
+  kind: "brand" | "model" | "category" | "origin" | "store";
   id: string;
   name: string;
   nameAr: string | null;

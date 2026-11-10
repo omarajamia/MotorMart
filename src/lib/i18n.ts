@@ -56,6 +56,7 @@ const en = {
   otherPartNumbers: "Other part numbers",
   carModel: "Car model",
   category: "Category",
+  origin: "Origin",
   currency: "JOD",
   inStock: (count: number) => `In stock: ${count}`,
   outOfStock: "Out of stock",
@@ -107,6 +108,7 @@ const ar: Messages = {
   otherPartNumbers: "أرقام أخرى للقطعة",
   carModel: "موديل السيارة",
   category: "التصنيف",
+  origin: "الصناعة",
   currency: "د.أ",
   inStock: (count) => `متوفر: ${count}`,
   outOfStock: "غير متوفر",
@@ -147,15 +149,16 @@ export function bothNames(
     : `${item.name} (${item.name_ar})`;
 }
 
-// A product's text in the chosen language, with the brand, car model and
-// category names taken from the Catalog. Arabic falls back to English when
-// the Arabic version hasn't been filled in.
+// A product's text in the chosen language, with the brand, car model,
+// category and origin names taken from the Catalog. Arabic falls back to
+// English when the Arabic version hasn't been filled in.
 export function localize(product: Product, lang: Lang, catalog: Catalog) {
   const brand = catalog.brands.find((b) => b.name === product.brand);
   const model = catalog.models.find(
     (m) => m.brand_id === brand?.id && m.name === product.car_model
   );
   const category = catalog.categories.find((c) => c.name === product.category);
+  const origin = catalog.origins.find((o) => o.name === product.origin);
 
   return {
     name: lang === "ar" ? product.name_ar || product.name : product.name,
@@ -168,6 +171,7 @@ export function localize(product: Product, lang: Lang, catalog: Catalog) {
     category: product.category
       ? catalogName(category, product.category, lang)
       : null,
+    origin: product.origin ? catalogName(origin, product.origin, lang) : null,
     // Both languages, so search works whichever one the visitor types in.
     searchText: [
       product.name,
@@ -180,6 +184,8 @@ export function localize(product: Product, lang: Lang, catalog: Catalog) {
       model?.name_ar,
       product.category,
       category?.name_ar,
+      product.origin,
+      origin?.name_ar,
     ]
       .filter(Boolean)
       .join(" ")
