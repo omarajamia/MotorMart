@@ -5,7 +5,7 @@ import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
 import { loadCatalog } from "@/lib/catalog";
 import { whatsappLink } from "@/lib/contact";
-import { localize, messages } from "@/lib/i18n";
+import { catalogName, localize, messages } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 import { UUID_PATTERN } from "@/lib/products";
 import { supabase } from "@/lib/supabase";
@@ -41,7 +41,7 @@ async function ProductDetails({
       ? supabase
           .from("products")
           .select(
-            "id, name, name_ar, part_number, alt_part_numbers, brand, car_model, year_from, year_to, category, description, description_ar, price, stock_quantity, image_url, extra_image_urls"
+            "id, name, name_ar, part_number, alt_part_numbers, brand, car_model, year_from, year_to, category, origin, variant_group, description, description_ar, price, stock_quantity, image_url, extra_image_urls"
           )
           .eq("id", id)
           .eq("is_active", true)
@@ -55,6 +55,20 @@ async function ProductDetails({
   }
 
   const text = product ? localize(product, lang, catalog) : null;
+
+  // Other origins (صناعات) of the same part that are on sale.
+  const { data: variants } = product?.variant_group
+    ? await supabase
+        .from("products")
+        .select("id, origin, price")
+        .eq("variant_group", product.variant_group)
+        .eq("is_active", true)
+        .order("price")
+    : { data: null };
+  const originName = (name: string | null) =>
+    name
+      ? catalogName(catalog.origins.find((o) => o.name === name), name, lang)
+      : t.origin;
 
   return (
     <main dir={t.dir} lang={lang} className="min-h-screen bg-gray-50 text-gray-900">
@@ -83,6 +97,37 @@ async function ProductDetails({
               <p className="text-sm font-medium text-orange-600">{text.brand}</p>
               <h2 className="mt-1 text-2xl font-bold sm:text-3xl">{text.name}</h2>
 
+              {variants && variants.length > 1 ? (
+                <div className="mt-4">
+                  <p className="text-sm font-medium text-gray-700">{t.origin}:</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {variants.map((variant) => (
+                      <Link
+                        key={variant.id}
+                        href={`/products/${variant.id}`}
+                        aria-current={variant.id === product.id ? "page" : undefined}
+                        className={`rounded-lg border px-3 py-2 text-sm ${
+                          variant.id === product.id
+                            ? "border-orange-500 bg-orange-50 font-semibold text-orange-800"
+                            : "border-gray-300 hover:border-orange-400"
+                        }`}
+                      >
+                        {originName(variant.origin)}
+                        <span className="ms-2 text-gray-500">
+                          {Number(variant.price).toFixed(2)} {t.currency}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                text.origin && (
+                  <p className="mt-2 text-sm text-gray-700">
+                    {t.origin}: <span className="font-medium">{text.origin}</span>
+                  </p>
+                )
+              )}
+
               <p className="mt-4 text-3xl font-bold">
                 {Number(product.price).toFixed(2)} {t.currency}
               </p>
@@ -99,7 +144,12 @@ async function ProductDetails({
               </p>
 
               <a
-                href={whatsappLink(t.whatsappOrder(text.name, product.part_number))}
+                href={whatsappLink(
+                  t.whatsappOrder(
+                    text.origin ? `${text.name} – ${text.origin}` : text.name,
+                    product.part_number
+                  )
+                )}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-5 inline-block w-full rounded-lg bg-green-600 px-5 py-3 text-center font-medium text-white hover:bg-green-700 sm:w-auto"

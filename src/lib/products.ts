@@ -13,6 +13,7 @@ export type ProductInput = {
   year_from: number | null;
   year_to: number | null;
   category: string | null;
+  origin: string | null;
   description: string | null;
   description_ar: string | null;
   price: number;
@@ -73,6 +74,7 @@ export function parseProductForm(
   const storeId = text(formData, "store_id");
   const carModel = text(formData, "car_model");
   const category = text(formData, "category");
+  const origin = text(formData, "origin");
   const description = text(formData, "description");
   const price = Number(text(formData, "price"));
   const stock = Number(text(formData, "stock_quantity"));
@@ -139,6 +141,7 @@ export function parseProductForm(
       year_from: yearFrom,
       year_to: yearTo,
       category: category || null,
+      origin: origin || null,
       description: description || null,
       description_ar: descriptionAr || null,
       price: Math.round(price * 100) / 100,

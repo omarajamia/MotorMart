@@ -7,6 +7,10 @@ export type Product = {
   brand: string;
   car_model: string;
   category: string | null;
+  // Where the part is made (an Origins name); each origin is its own product.
+  origin: string | null;
+  // Products that are the same part in different origins share this.
+  variant_group: string | null;
   description: string | null;
   price: number;
   stock_quantity: number;
@@ -20,6 +24,7 @@ export type AdminProduct = Product & {
   store_id: string | null;
   // Only loaded on the admin product list.
   store?: { name: string } | null;
+  cost?: { cost_price: number } | null;
   is_active: boolean;
 };
 
@@ -27,6 +32,8 @@ export type ProductDetails = AdminProduct & {
   year_from: number | null;
   year_to: number | null;
   extra_image_urls: string[];
+  // What the product costs us; admin only, from public.product_costs.
+  cost_price?: number | null;
 };
 
 // Result of an admin form submission, shown next to the form.

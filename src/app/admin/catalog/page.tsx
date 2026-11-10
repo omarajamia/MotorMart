@@ -10,7 +10,7 @@ export const instant = false;
 export default function CatalogPage() {
   return (
     <div className="mx-auto max-w-4xl">
-      <h1 className="text-2xl font-bold">Stores, brands, car models & categories</h1>
+      <h1 className="text-2xl font-bold">Stores, brands, models, categories & origins</h1>
       <p className="mt-1 text-sm text-gray-600">
         These lists fill the dropdowns on the product form and the filters in
         the shop. The Arabic names are shown to visitors browsing in Arabic.
@@ -33,7 +33,7 @@ async function CatalogLists() {
   const [catalog, stores, { data: products }] = await Promise.all([
     loadCatalog(supabase),
     loadStores(supabase),
-    supabase.from("products").select("brand, car_model, category, store_id"),
+    supabase.from("products").select("brand, car_model, category, origin, store_id"),
   ]);
 
   // How many products use each name, shown next to it.
@@ -42,6 +42,7 @@ async function CatalogLists() {
       brand: string;
       car_model: string;
       category: string | null;
+      origin: string | null;
       store_id: string | null;
     }) => boolean
   ) =>
@@ -115,6 +116,19 @@ async function CatalogLists() {
             name={category.name}
             nameAr={category.name_ar}
             productCount={count((p) => p.category === category.name)}
+          />
+        ))}
+      </Section>
+
+      <Section title="Origins (صناعة)" form={<CatalogAddForm kind="origin" />}>
+        {catalog.origins.map((origin) => (
+          <CatalogRow
+            key={origin.id}
+            kind="origin"
+            id={origin.id}
+            name={origin.name}
+            nameAr={origin.name_ar}
+            productCount={count((p) => p.origin === origin.name)}
           />
         ))}
       </Section>

@@ -197,6 +197,11 @@ export default function ProductSearch({
                   {product.text.brand}
                 </p>
                 <h3 className="mt-1 text-lg font-bold">{product.text.name}</h3>
+                {product.text.origin && (
+                  <span className="mt-1 inline-block rounded-full bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-800">
+                    {t.origin}: {product.text.origin}
+                  </span>
+                )}
                 {product.text.description && (
                   <p className="mt-2 line-clamp-3 text-sm text-gray-700">
                     {product.text.description}

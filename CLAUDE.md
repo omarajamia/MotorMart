@@ -57,6 +57,10 @@ Other database objects (see supabase/migrations/):
 - public.stores (name, details) and products.store_id: admin-only, never
   shown or readable in the shop
 - products.extra_image_urls (text[], up to 8 extra photos)
+- public.product_costs (product_id, cost_price): admin-only cost per product;
+  kept out of products because product rows are publicly readable
+- public.origins (name, name_ar) catalog list; products.origin (English name)
+  and products.variant_group (shared by the origins of one part)
 - Storage bucket product-images (public read; admins upload)
 - Admin names are stored in the Supabase Auth user's metadata (full_name)
 
@@ -97,7 +101,10 @@ numbers, Arabic product text, catalog lists (brands, car models, categories),
 phone-friendly admin pages, up to 8 extra photos per product with a gallery,
 a search box on the admin product list, bilingual brand/model filters (no
 category filter in the shop), a floating WhatsApp button, and admin-only
-stores (where each product comes from; required on the product form).
+stores (where each product comes from; required on the product form), an
+admin-only cost price with profit, and origins (صناعة): each origin of a part
+is its own product row linked by variant_group, with a switcher on the
+product page and "Add another origin" on the edit page.
 
 Deployed on Vercel from the main branch: https://motor-mart-one.vercel.app
 Workflow: work on a branch (currently feature/admin), push, the owner opens and

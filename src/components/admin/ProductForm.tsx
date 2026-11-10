@@ -41,6 +41,17 @@ export default function ProductForm({
   const busy = pending || preparing;
   // New "more photos", collected over several picks and sent on save.
   const [extraFiles, setExtraFiles] = useState<File[]>([]);
+  // Selling and cost price, kept in state to show the profit as you type.
+  const [priceText, setPriceText] = useState(
+    product ? Number(product.price).toFixed(2) : ""
+  );
+  const [costText, setCostText] = useState(
+    product?.cost_price != null ? Number(product.cost_price).toFixed(2) : ""
+  );
+  const profit =
+    priceText !== "" && costText !== ""
+      ? Number(priceText) - Number(costText)
+      : null;
 
   return (
     <form
@@ -148,6 +159,25 @@ export default function ProductForm({
           </select>
         </label>
 
+        <label className="block">
+          <span className="text-sm font-medium text-gray-700">
+            Origin (صناعة)
+          </span>
+          <select
+            name="origin"
+            defaultValue={product?.origin ?? ""}
+            className={inputClass}
+          >
+            <option value="">Not specified</option>
+            {catalog.origins.map((origin) => (
+              <option key={origin.id} value={origin.name}>
+                {origin.name}
+                {origin.name_ar ? ` – ${origin.name_ar}` : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <label className="block sm:col-span-2">
           <span className="text-sm font-medium text-gray-700">
             Other part numbers
@@ -249,7 +279,7 @@ export default function ProductForm({
 
         <label className="block">
           <span className="text-sm font-medium text-gray-700">
-            Price (JOD) *
+            Selling price (JOD) *
           </span>
           <input
             type="number"
@@ -257,11 +287,38 @@ export default function ProductForm({
             required
             min="0"
             step="0.01"
-            defaultValue={
-              product ? Number(product.price).toFixed(2) : undefined
-            }
+            value={priceText}
+            onChange={(event) => setPriceText(event.target.value)}
             className={inputClass}
           />
+        </label>
+
+        <label className="block">
+          <span className="text-sm font-medium text-gray-700">
+            Cost price (JOD){" "}
+            <span className="font-normal text-gray-500">(admins only)</span>
+          </span>
+          <input
+            type="number"
+            name="cost_price"
+            min="0"
+            step="0.01"
+            value={costText}
+            onChange={(event) => setCostText(event.target.value)}
+            placeholder="What it costs you"
+            className={inputClass}
+          />
+          {profit !== null && (
+            <span
+              className={`mt-1 block text-xs font-medium ${
+                profit < 0 ? "text-red-600" : "text-green-700"
+              }`}
+            >
+              Profit: {profit.toFixed(2)} JOD
+              {Number(priceText) > 0 &&
+                ` (${Math.round((profit / Number(priceText)) * 100)}%)`}
+            </span>
+          )}
         </label>
 
         <label className="block">

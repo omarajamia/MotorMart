@@ -131,6 +131,7 @@ async function checkCatalog(
     brand: string;
     car_model: string;
     category: string | null;
+    origin: string | null;
   }
 ) {
   const { data: store } = await supabase
@@ -172,6 +173,17 @@ async function checkCatalog(
     }
   }
 
+  if (product.origin) {
+    const { data: origin } = await supabase
+      .from("origins")
+      .select("id")
+      .eq("name", product.origin)
+      .maybeSingle();
+    if (!origin) {
+      return "Choose an origin from the list.";
+    }
+  }
+
   return null;
 }
 
@@ -199,6 +211,38 @@ function readPhotos(formData: FormData, keptExtraCount = 0) {
   return { image, extras };
 }
 
+// The optional "Cost price" field: what the product costs us (admins only).
+function readCostPrice(formData: FormData) {
+  const text = String(formData.get("cost_price") ?? "").trim();
+  if (!text) return { value: null };
+  const value = Number(text);
+  if (!Number.isFinite(value) || value < 0 || value > 1_000_000) {
+    return { error: "Cost price must be a number of 0 or more." };
+  }
+  return { value: Math.round(value * 100) / 100 };
+}
+
+// Costs live in their own admin-only table. An empty cost removes it.
+async function saveCostPrice(
+  supabase: AdminSupabase,
+  productId: string,
+  cost: number | null
+) {
+  const { error } =
+    cost === null
+      ? await supabase.from("product_costs").delete().eq("product_id", productId)
+      : await supabase.from("product_costs").upsert({
+          product_id: productId,
+          cost_price: cost,
+          updated_at: new Date().toISOString(),
+        });
+  if (error) {
+    console.error("Failed to save cost price:", error);
+    return false;
+  }
+  return true;
+}
+
 export async function createProduct(
   _prev: ActionState,
   formData: FormData
@@ -218,6 +262,11 @@ export async function createProduct(
     return { error: catalogError };
   }
 
+  const cost = readCostPrice(formData);
+  if ("error" in cost) {
+    return { error: cost.error };
+  }
+
   const photos = readPhotos(formData);
   if ("error" in photos) {
     return { error: photos.error };
@@ -235,15 +284,26 @@ export async function createProduct(
     return { error: "Couldn't upload the photos. Please try again." };
   }
 
-  const { error } = await supabase.from("products").insert({
-    ...parsed.data,
-    image_url: imageUrl,
-    extra_image_urls: extraUrls,
-  });
-  if (error) {
+  const { data: created, error } = await supabase
+    .from("products")
+    .insert({
+      ...parsed.data,
+      image_url: imageUrl,
+      extra_image_urls: extraUrls,
+    })
+    .select("id")
+    .single<{ id: string }>();
+  if (error || !created) {
     console.error("Failed to create product:", error);
     await removeProductImages(supabase, [imageUrl, ...extraUrls]);
     return { error: saveErrorMessage(error) };
+  }
+
+  if (!(await saveCostPrice(supabase, created.id, cost.value))) {
+    return {
+      error:
+        "The product was saved, but its cost price wasn't. Open it from the Products list to add the cost again.",
+    };
   }
 
   redirect("/admin");
@@ -271,6 +331,11 @@ export async function updateProduct(
   const catalogError = await checkCatalog(supabase, parsed.data);
   if (catalogError) {
     return { error: catalogError };
+  }
+
+  const cost = readCostPrice(formData);
+  if ("error" in cost) {
+    return { error: cost.error };
   }
 
   const { data: current } = await supabase
@@ -336,6 +401,12 @@ export async function updateProduct(
   if (imageUrl !== current.image_url) removed.push(current.image_url);
   await removeProductImages(supabase, removed);
 
+  if (!(await saveCostPrice(supabase, id, cost.value))) {
+    return {
+      error: "The product was saved, but its cost price wasn't. Please try again.",
+    };
+  }
+
   redirect("/admin");
 }
 
@@ -370,4 +441,66 @@ export async function deleteProduct(
   ]);
 
   redirect("/admin");
+}
+
+// "Add another origin of this part": copies the product's details into a new
+// product of the same group, without photos, origin, stock or cost, hidden
+// from the shop until it's filled in, then opens it for editing.
+export async function addProductOrigin(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, isAdmin } = await getAdmin();
+  if (!isAdmin) {
+    return { error: "You don't have admin access." };
+  }
+
+  const id = String(formData.get("id") ?? "");
+  if (!UUID_PATTERN.test(id)) {
+    return { error: "Unknown product." };
+  }
+
+  const { data: product } = await supabase
+    .from("products")
+    .select(
+      "name, name_ar, part_number, alt_part_numbers, brand, car_model, year_from, year_to, category, description, description_ar, price, store_id, variant_group"
+    )
+    .eq("id", id)
+    .maybeSingle<Record<string, unknown> & { variant_group: string | null }>();
+  if (!product) {
+    return { error: "This product no longer exists." };
+  }
+
+  // The first copy starts the group, named after the original product.
+  const group = product.variant_group ?? id;
+  if (!product.variant_group) {
+    const { error } = await supabase
+      .from("products")
+      .update({ variant_group: group })
+      .eq("id", id);
+    if (error) {
+      console.error("Failed to start origin group:", error);
+      return { error: "Couldn't add another origin. Please try again." };
+    }
+  }
+
+  const { data: copy, error } = await supabase
+    .from("products")
+    .insert({
+      ...product,
+      variant_group: group,
+      origin: null,
+      stock_quantity: 0,
+      image_url: null,
+      extra_image_urls: [],
+      is_active: false,
+    })
+    .select("id")
+    .single<{ id: string }>();
+  if (error || !copy) {
+    console.error("Failed to copy product for another origin:", error);
+    return { error: "Couldn't add another origin. Please try again." };
+  }
+
+  redirect(`/admin/products/${copy.id}/edit`);
 }
