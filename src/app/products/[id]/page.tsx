@@ -139,7 +139,7 @@ async function ProductDetails({
                 }
               >
                 {product.stock_quantity > 0
-                  ? t.inStock(product.stock_quantity)
+                  ? t.inStock
                   : t.outOfStock}
               </p>
 
@@ -147,7 +147,16 @@ async function ProductDetails({
                 href={whatsappLink(
                   t.whatsappOrder(
                     text.origin ? `${text.name} – ${text.origin}` : text.name,
-                    product.part_number
+                    product.part_number,
+                    // The car the part fits, e.g. "نيسان صني 2002 – 2012".
+                    [
+                      text.brand,
+                      text.model,
+                      (product.year_from || product.year_to) &&
+                        t.yearsRange(product.year_from, product.year_to),
+                    ]
+                      .filter(Boolean)
+                      .join(" ")
                   )
                 )}
                 target="_blank"
