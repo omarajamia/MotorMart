@@ -58,7 +58,8 @@ const en = {
   category: "Category",
   origin: "Origin",
   currency: "JOD",
-  inStock: (count: number) => `In stock: ${count}`,
+  // Customers see only whether a part is available, not how many.
+  inStock: "In stock",
   outOfStock: "Out of stock",
 
   // Product page
@@ -68,8 +69,8 @@ const en = {
     from && to ? `${from} – ${to}` : from ? `From ${from}` : `Up to ${to}`,
   description: "Description",
   orderOnWhatsapp: "Order on WhatsApp",
-  whatsappOrder: (name: string, part: string) =>
-    `Hi ${SITE_NAME.en}, I'd like to order: ${name} (part number ${part}). Is it available?`,
+  whatsappOrder: (name: string, part: string, car: string) =>
+    `Hi ${SITE_NAME.en}, I'd like to order: ${name} for ${car} (part number ${part}). Is it available?`,
   productNotFound: "This product doesn't exist or is no longer available.",
 };
 
@@ -110,7 +111,7 @@ const ar: Messages = {
   category: "التصنيف",
   origin: "الصناعة",
   currency: "د.أ",
-  inStock: (count) => `متوفر: ${count}`,
+  inStock: "متوفر",
   outOfStock: "غير متوفر",
 
   backToProducts: "→ العودة إلى المنتجات",
@@ -119,8 +120,8 @@ const ar: Messages = {
     from && to ? `${from} – ${to}` : from ? `من ${from}` : `حتى ${to}`,
   description: "الوصف",
   orderOnWhatsapp: "اطلب عبر واتساب",
-  whatsappOrder: (name, part) =>
-    `مرحباً ${SITE_NAME.ar}، أريد طلب هذه القطعة: ${name} (رقم القطعة ${part}). هل هي متوفرة؟`,
+  whatsappOrder: (name, part, car) =>
+    `مرحباً ${SITE_NAME.ar}، أريد طلب هذه القطعة: ${name} لسيارة ${car} (رقم القطعة ${part}). هل هي متوفرة؟`,
   productNotFound: "هذا المنتج غير موجود أو لم يعد متوفراً.",
 };
 

@@ -238,7 +238,7 @@ export default function ProductSearch({
                     }
                   >
                     {product.stock_quantity > 0
-                      ? t.inStock(product.stock_quantity)
+                      ? t.inStock
                       : t.outOfStock}
                   </span>
                 </div>
